@@ -1,15 +1,16 @@
 package commands
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
 
+	"proxmox-cli/config"
 	"proxmox-cli/helpers"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -55,20 +56,27 @@ func NewLoginCommand() *cobra.Command {
 
 func ValidateLoginCommand() *cobra.Command {
 	var trust bool
+	var logLevel bool
 
     var validateCmd = &cobra.Command{
         Use:   "validate",
         Short: "Validate the current session",
-        Run: func(cmd *cobra.Command, args []string) {
-            if validateSession(trust) {
-                fmt.Println("Session is valid.")
-            } else {
-                fmt.Println("Session is invalid.")
-            }
-        },
     }
 
     validateCmd.Flags().BoolVarP(&trust, "trust", "t", false, "Trust SSL certificates")
+    validateCmd.Flags().BoolVarP(&logLevel, "show-log", "l", false, "Set the log level to error")
+
+    validateCmd.Run = func(cmd *cobra.Command, args []string) {
+        if logLevel  {
+            config.SetLogLevel(logrus.InfoLevel)
+        }
+
+        if validateSession(trust) {
+            fmt.Println("Session is valid.")
+        } else {
+            fmt.Println("Session is invalid.")
+        }
+    }
     
     return validateCmd
 }
@@ -90,7 +98,7 @@ func loginToProxmox(server string, port int, httpScheme string, username string,
     }
 
     resp, err := client.Do(req)
-    if err != nil {
+    if (err != nil) {
         fmt.Println("Error logging in:", err)
         return
     }
@@ -208,34 +216,20 @@ func validateSession(trust bool) bool {
     req.Header = http.Header{} // Reset headers to avoid normalization
 	req.Header["CSRFPreventionToken"] = []string{csrfToken.(string)} 
 
-    fmt.Println("--- HTTP Request ---")
-	fmt.Printf("Method: %s\n", req.Method)
-	fmt.Printf("URL: %s\n", req.URL.String())
-	fmt.Println("Headers:")
-	for key, values := range req.Header {
-		for _, value := range values {
-			fmt.Printf("  %s: %s\n", key, value)
-		}
-	}
-	if req.Body != nil {
-		bodyBytes, _ := io.ReadAll(req.Body)
-		fmt.Printf("Body: %s\n", string(bodyBytes))
-		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes)) // Reassign the body after reading
-	}
-	fmt.Println("--------------------")
-
     resp, err := client.Do(req)
     if err != nil {
         fmt.Println("Error validating session:", err)
         return false
     }
 
-    _, err = helpers.HandleHTTPResponse(resp)
+    bodyBytes, err := helpers.HandleHTTPResponse(resp)
     if err != nil {
         fmt.Println("Session validation failed:", err)
         return false
     }
 
-    fmt.Println("Session is valid.")
+    // Update the session file with the response data
+    helpers.UpdateSessionField("response", bodyBytes)
+
     return true
 }

@@ -3,8 +3,18 @@ package main
 import (
 	"proxmox-cli/commands"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
+
+var logger = logrus.New()
+
+func init() {
+	logger.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+	})
+	logger.SetLevel(logrus.InfoLevel)
+}
 
 func main() {
 	// Create the root command

@@ -85,3 +85,25 @@ func ReadSessionFile() (map[string]interface{}, error) {
 	}
 	return sessionData, nil
 }
+
+// UpdateSessionField updates a specific field in the session file with a new value.
+//
+// Parameters:
+//   - field: The name of the field to update.
+//   - value: The new value to set for the specified field.
+//
+// Returns:
+//   - An error if the operation fails, or nil if the operation is successful.
+func UpdateSessionField(field string, value interface{}) error {
+	// Read the existing session data
+	sessionData, err := ReadSessionFile()
+	if err != nil {
+		return err
+	}
+
+	// Update the specified field
+	sessionData[field] = value
+
+	// Write the updated session data back to the file
+	return WriteSessionFile(sessionData)
+}
