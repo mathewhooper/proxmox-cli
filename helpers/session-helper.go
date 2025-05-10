@@ -101,9 +101,6 @@ func UpdateSessionField(field string, value interface{}) error {
 		return err
 	}
 
-	// Update the specified field
 	sessionData[field] = value
-
-	// Write the updated session data back to the file
 	return WriteSessionFile(sessionData)
 }

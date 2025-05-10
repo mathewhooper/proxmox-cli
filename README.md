@@ -10,6 +10,11 @@ This project is a Command-Line Interface (CLI) tool designed to interact with a 
 - **Session Validation**: Validate the current session by checking cookies, headers, and payloads.
 - **Secure Communication**: Support for SSL certificate trust options.
 - **Session Management**: Read and write session data to a file in the user's home directory.
+- **SDN Management**: Manage Software Defined Networking (SDN) zones in Proxmox.
+  - **Create Zone**: Add a new SDN zone with a specified name and type.
+  - **Delete Zone**: Remove an existing SDN zone by name.
+  - **Update Zone**: Modify the type of an existing SDN zone.
+  - **Apply Configuration**: Apply the configuration of a specified SDN zone.
 
 ## Development Process
 

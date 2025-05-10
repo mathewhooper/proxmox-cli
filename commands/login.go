@@ -16,27 +16,31 @@ import (
 	"golang.org/x/term"
 )
 
-// NewLoginCommand creates a new Cobra command for logging in to a Proxmox server.
+// LoginCommand creates a new Cobra command for logging in to a Proxmox server.
 //
 // Returns:
 // - *cobra.Command: The login command.
-func NewLoginCommand() *cobra.Command {
+func LoginCommand() *cobra.Command {
 	var server string
     var username string
     var httpScheme string
 	var port int
 	var trust bool
+	var logLevel bool
 
-	// Create the login command
 	var loginCmd = &cobra.Command{
 		Use:   "login",
 		Short: "Log in to a Proxmox server",
 		Run: func(cmd *cobra.Command, args []string) {
+            config.Logger.Info("Logging in to Proxmox server...")
+            if logLevel  {
+                config.SetLogLevel(logrus.InfoLevel)
+            }
 			fmt.Print("Enter Password: ")
 			passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
-			fmt.Println() // Print a newline after password input
+			fmt.Println() 
 			if err != nil {
-				fmt.Println("Error reading password:", err)
+				config.Logger.Error("Error reading password: ", err)
 				return
 			}
 			password := string(passwordBytes)
@@ -44,14 +48,13 @@ func NewLoginCommand() *cobra.Command {
 		},
 	}
 
-	// Add flags to the login command
 	loginCmd.Flags().StringVarP(&server, "server", "s", "", "Proxmox server URL")
 	loginCmd.Flags().StringVarP(&username, "username", "u", "", "Username for Proxmox")
 	loginCmd.Flags().IntVarP(&port, "port", "P", 8006, "Proxmox server port")
 	loginCmd.Flags().StringVarP(&httpScheme, "httpScheme", "S", "https", "HTTP scheme (http or https)")
 	loginCmd.Flags().BoolVarP(&trust, "trust", "t", false, "Trust SSL certificates")
+    loginCmd.Flags().BoolVarP(&logLevel, "show-log", "l", false, "Set the log level to error")
 
-	// Mark flags as required
 	loginCmd.MarkFlagRequired("server")
 	loginCmd.MarkFlagRequired("username")
 
@@ -75,6 +78,7 @@ func ValidateLoginCommand() *cobra.Command {
     validateCmd.Flags().BoolVarP(&logLevel, "show-log", "l", false, "Set the log level to error")
 
     validateCmd.Run = func(cmd *cobra.Command, args []string) {
+        config.Logger.Info("Validating session...")
         if logLevel  {
             config.SetLogLevel(logrus.InfoLevel)
         }
@@ -109,19 +113,19 @@ func loginToProxmox(server string, port int, httpScheme string, username string,
 
     req, err := helpers.CreateHTTPRequest("POST", uri, payload, headers, nil)
     if err != nil {
-        fmt.Println("Error creating request:", err)
+        config.Logger.Error("Error creating request: ", err)
         return
     }
 
     resp, err := client.Do(req)
     if (err != nil) {
-        fmt.Println("Error logging in:", err)
+        config.Logger.Error("Error logging in: ", err)
         return
     }
 
     body, err := helpers.HandleHTTPResponse(resp)
     if err != nil {
-        fmt.Println("Error:", err)
+        config.Logger.Error("Error: ", err)
         return
     }
 
@@ -135,9 +139,9 @@ func loginToProxmox(server string, port int, httpScheme string, username string,
     }
 
     if err := helpers.WriteSessionFile(sessionData); err != nil {
-        fmt.Println("Error writing session data to file:", err)
+        config.Logger.Error("Error writing session data to file: ", err)
     } else {
-        fmt.Println("Authenticated!")
+        config.Logger.Info("Authenticated!")
     }
 }
 
@@ -151,25 +155,25 @@ func loginToProxmox(server string, port int, httpScheme string, username string,
 func validateSession(trust bool) bool {
     sessionData, err := helpers.ReadSessionFile()
     if err != nil {
-        fmt.Println("Error reading session file:", err)
+        config.Logger.Error("Error reading session file: ", err)
         return false
     }
 
     server, ok := sessionData["server"].(string)
     if !ok || server == "" {
-        fmt.Println("Invalid session: missing server information")
+        config.Logger.Error("Invalid session: missing server information")
         return false
     }
 
     httpScheme, ok := sessionData["httpScheme"].(string)
     if !ok || httpScheme == "" {
-        fmt.Println("Invalid session: missing HTTP scheme")
+        config.Logger.Error("Invalid session: missing HTTP scheme")
         return false
     }
 
-    port, ok := sessionData["port"].(float64) // JSON numbers are decoded as float64
+    port, ok := sessionData["port"].(float64)
     if !ok || port <= 0 {
-        fmt.Println("Invalid session: missing or invalid port")
+        config.Logger.Error("Invalid session: missing or invalid port")
         return false
     }
 
@@ -177,37 +181,37 @@ func validateSession(trust bool) bool {
 
     response, ok := sessionData["response"].(string)
     if !ok || response == "" {
-        fmt.Println("Invalid session: missing response information")
+        config.Logger.Error("Invalid session: missing response information")
         return false
     }
 
     var responseData map[string]interface{}
     if err := json.Unmarshal([]byte(response), &responseData); err != nil {
-        fmt.Println("Error parsing response JSON:", err)
+        config.Logger.Error("Error parsing response JSON: ", err)
         return false
     }
 
     data, ok := responseData["data"]
     if !ok {
-        fmt.Println("Invalid session: missing 'data' field in response")
+        config.Logger.Error("Invalid session: missing 'data' field in response")
         return false
     }
 
     username, ok := data.(map[string]interface{})["username"]
 	if !ok {
-		fmt.Println("Invalid session: missing 'username' field in data")
+		config.Logger.Error("Invalid session: missing 'username' field in data")
 		return false
 	}
 
     ticket, ok := data.(map[string]interface{})["ticket"]
     if !ok {
-        fmt.Println("Invalid session: missing 'ticket' field in data")
+        config.Logger.Error("Invalid session: missing 'ticket' field in data")
         return false
     }
 
     csrfToken, ok := data.(map[string]interface{})["CSRFPreventionToken"]
     if !ok {
-        fmt.Println("Invalid session: missing 'CSRFPreventionToken' field in data")
+        config.Logger.Error("Invalid session: missing 'CSRFPreventionToken' field in data")
         return false
     }
 
@@ -215,7 +219,7 @@ func validateSession(trust bool) bool {
 
     ticketStr, ok := ticket.(string)
     if !ok {
-        fmt.Println("Error: ticket is not a string")
+        config.Logger.Error("Error: ticket is not a string")
         return false
     }
 
@@ -231,26 +235,25 @@ func validateSession(trust bool) bool {
         },
     })
     if err != nil {
-        fmt.Println("Error creating POST request:", err)
+        config.Logger.Error("Error creating POST request: ", err)
         return false
     }
 
-    req.Header = http.Header{} // Reset headers to avoid normalization
+    req.Header = http.Header{}
 	req.Header["CSRFPreventionToken"] = []string{csrfToken.(string)} 
 
     resp, err := client.Do(req)
     if err != nil {
-        fmt.Println("Error validating session:", err)
+        config.Logger.Error("Error validating session: ", err)
         return false
     }
 
     bodyBytes, err := helpers.HandleHTTPResponse(resp)
     if err != nil {
-        fmt.Println("Session validation failed:", err)
+        config.Logger.Error("Session validation failed: ", err)
         return false
     }
 
-    // Update the session file with the response data
     helpers.UpdateSessionField("response", bodyBytes)
 
     return true
