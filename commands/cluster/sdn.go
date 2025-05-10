@@ -15,6 +15,7 @@ func SDNCommand() *cobra.Command {
 
 	// Add the create-zone and delete-zone subcommands
 	sdnCmd.AddCommand(ZoneCommand())
+    sdnCmd.AddCommand(VnetCommand())
     sdnCmd.AddCommand(applyZoneConfigCommand())
 
 	return sdnCmd
