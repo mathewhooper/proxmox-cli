@@ -29,9 +29,3 @@ jobs:
         with:
           name: test-results
           path: test-results.json
-
-      - name: Publish test results
-        uses: actions/upload-test-results@v1
-        with:
-          tool: go
-          path: test-results.json
