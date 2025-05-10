@@ -74,228 +74,225 @@ func ValidateLoginCommand() *cobra.Command {
     return validateCmd
 }
 
-func loginToProxmox(server string, port int, httpScheme string, username string, password string, trust bool) {
-	uri := fmt.Sprintf("%s://%s:%d/api2/json/access/ticket", httpScheme, server, port)
-
-	// Create a custom HTTP client if trust is true
-	client := &http.Client{}
-	if trust {
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		client = &http.Client{Transport: tr}
-	}
-
-	// Create the request payload
-	payload := fmt.Sprintf("username=%s&password=%s&realm=pam&new-format=1", username, password)
-
-	// Make the HTTP request
-	req, err := http.NewRequest("POST", uri, bytes.NewBuffer([]byte(payload)))
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return
-	}
-	// Set charset=UTF-8 in the Content-Type header
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error logging in:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Print the response status code
-	fmt.Println("Status Code:", resp.StatusCode)
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response:", err)
-		return
-	}
-
-    // Check if the status code is 200
-	if resp.StatusCode != 200 {
-		fmt.Printf("Error: Received status code %d\n", resp.StatusCode)
-        fmt.Println("Response:", string(body))
-		return
-	}
-
-	// Print the response
-	fmt.Println("Response:", string(body))
-
-	// Store the session data
-	sessionData := map[string]interface{}{
-		"server":     server,
-		"port":       port,
-		"httpScheme": httpScheme,
-		"response":   string(body),
-	}
-
-	usr, err := user.Current()
-	if err != nil {
-		fmt.Println("Error getting user profile directory:", err)
-		return
-	}
-
-	dirPath := filepath.Join(usr.HomeDir, ".proxmox")
-
-	// Check if the directory already exists
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
-			fmt.Println("Error creating .proxmox directory:", err)
-			return
-		}
-	}
-
-	filePath := filepath.Join(dirPath, "session")
-	file, err := os.Create(filePath)
-	if err != nil {
-		fmt.Println("Error creating session file:", err)
-		return
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-	if err := encoder.Encode(sessionData); err != nil {
-		fmt.Println("Error writing session data to file:", err)
-		return
-	}
-
-	fmt.Println("Authenticated!")
+// Helper function to create an HTTP client
+func createHTTPClient(trust bool) *http.Client {
+    if trust {
+        tr := &http.Transport{
+            TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+        }
+        return &http.Client{Transport: tr}
+    }
+    return &http.Client{}
 }
 
+// Helper function to create an HTTP request
+func createHTTPRequest(method, url, payload string, headers map[string]string, cookies []*http.Cookie) (*http.Request, error) {
+    req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(payload)))
+    if err != nil {
+        return nil, err
+    }
+    for key, value := range headers {
+        req.Header.Set(key, value)
+    }
+    for _, cookie := range cookies {
+        req.AddCookie(cookie)
+    }
+    return req, nil
+}
+
+// Helper function to handle HTTP responses
+func handleHTTPResponse(resp *http.Response) (string, error) {
+    defer resp.Body.Close()
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return "", err
+    }
+    if resp.StatusCode != 200 {
+        return "", fmt.Errorf("received status code %d: %s", resp.StatusCode, string(body))
+    }
+    return string(body), nil
+}
+
+// Helper function to read session data from file
+func readSessionFile() (map[string]interface{}, error) {
+    usr, err := user.Current()
+    if err != nil {
+        return nil, err
+    }
+    sessionFilePath := filepath.Join(usr.HomeDir, ".proxmox", "session")
+    file, err := os.Open(sessionFilePath)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
+
+    var sessionData map[string]interface{}
+    decoder := json.NewDecoder(file)
+    if err := decoder.Decode(&sessionData); err != nil {
+        return nil, err
+    }
+    return sessionData, nil
+}
+
+// Helper function to write session data to file
+func writeSessionFile(data map[string]interface{}) error {
+    usr, err := user.Current()
+    if err != nil {
+        return err
+    }
+    dirPath := filepath.Join(usr.HomeDir, ".proxmox")
+    if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+        if err := os.MkdirAll(dirPath, 0755); err != nil {
+            return err
+        }
+    }
+    filePath := filepath.Join(dirPath, "session")
+    file, err := os.Create(filePath)
+    if err != nil {
+        return err
+    }
+    defer file.Close()
+
+    encoder := json.NewEncoder(file)
+    return encoder.Encode(data)
+}
+
+// Refactor loginToProxmox to use helper functions
+func loginToProxmox(server string, port int, httpScheme string, username string, password string, trust bool) {
+    uri := fmt.Sprintf("%s://%s:%d/api2/json/access/ticket", httpScheme, server, port)
+    client := createHTTPClient(trust)
+
+    payload := fmt.Sprintf("username=%s&password=%s&realm=pam&new-format=1", username, password)
+    headers := map[string]string{
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    }
+
+    req, err := createHTTPRequest("POST", uri, payload, headers, nil)
+    if err != nil {
+        fmt.Println("Error creating request:", err)
+        return
+    }
+
+    resp, err := client.Do(req)
+    if err != nil {
+        fmt.Println("Error logging in:", err)
+        return
+    }
+
+    body, err := handleHTTPResponse(resp)
+    if err != nil {
+        fmt.Println("Error:", err)
+        return
+    }
+
+    fmt.Println("Response:", body)
+
+    sessionData := map[string]interface{}{
+        "server":     server,
+        "port":       port,
+        "httpScheme": httpScheme,
+        "response":   body,
+    }
+
+    if err := writeSessionFile(sessionData); err != nil {
+        fmt.Println("Error writing session data to file:", err)
+    } else {
+        fmt.Println("Authenticated!")
+    }
+}
+
+// Refactor validateSession to use helper functions
 func validateSession(trust bool) bool {
-	usr, err := user.Current()
-	if err != nil {
-		fmt.Println("Error getting user profile directory:", err)
-		return false
-	}
+    sessionData, err := readSessionFile()
+    if err != nil {
+        fmt.Println("Error reading session file:", err)
+        return false
+    }
 
-	sessionFilePath := filepath.Join(usr.HomeDir, ".proxmox", "session")
-	file, err := os.Open(sessionFilePath)
-	if err != nil {
-		fmt.Println("Error opening session file:", err)
-		return false
-	}
-	defer file.Close()
+    server, ok := sessionData["server"].(string)
+    if !ok || server == "" {
+        fmt.Println("Invalid session: missing server information")
+        return false
+    }
 
-	var sessionData map[string]interface{}
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&sessionData); err != nil {
-		fmt.Println("Error decoding session file:", err)
-		return false
-	}
+    httpScheme, ok := sessionData["httpScheme"].(string)
+    if !ok || httpScheme == "" {
+        fmt.Println("Invalid session: missing HTTP scheme")
+        return false
+    }
 
-	server, ok := sessionData["server"].(string)
-	if !ok || server == "" {
-		fmt.Println("Invalid session: missing server information")
-		return false
-	}
+    port, ok := sessionData["port"].(float64) // JSON numbers are decoded as float64
+    if !ok || port <= 0 {
+        fmt.Println("Invalid session: missing or invalid port")
+        return false
+    }
 
-	httpScheme, ok := sessionData["httpScheme"].(string)
-	if !ok || httpScheme == "" {
-		fmt.Println("Invalid session: missing HTTP scheme")
-		return false
-	}
-
-	port, ok := sessionData["port"].(float64) // JSON numbers are decoded as float64
-	if !ok || port <= 0 {
-		fmt.Println("Invalid session: missing or invalid port")
-		return false
-	}
-
-	uri := fmt.Sprintf("%s://%s:%d/api2/json/access/ticket", httpScheme, server, int(port))
+    uri := fmt.Sprintf("%s://%s:%d/api2/json/access/ticket", httpScheme, server, int(port))
 
     response, ok := sessionData["response"].(string)
-	if !ok || server == "" {
-		fmt.Println("Invalid session: missing response information")
-		return false
-	}
+    if !ok || response == "" {
+        fmt.Println("Invalid session: missing response information")
+        return false
+    }
 
-	// Parse the response body to extract the 'data' field
-	var responseData map[string]interface{}
-	if err := json.Unmarshal([]byte(response), &responseData); err != nil {
-		fmt.Println("Error parsing response JSON:", err)
-		return false
-	}
+    var responseData map[string]interface{}
+    if err := json.Unmarshal([]byte(response), &responseData); err != nil {
+        fmt.Println("Error parsing response JSON:", err)
+        return false
+    }
 
-	data, ok := responseData["data"]
-	if !ok {
-		fmt.Println("Invalid session: missing 'data' field in response")
-		return false
-	}
+    data, ok := responseData["data"]
+    if !ok {
+        fmt.Println("Invalid session: missing 'data' field in response")
+        return false
+    }
 
-	// Extract the 'ticket' field from the 'data' object
-	ticket, ok := data.(map[string]interface{})["ticket"]
-	if !ok {
-		fmt.Println("Invalid session: missing 'ticket' field in data")
-		return false
-	}
-
-	fmt.Println("Extracted ticket:", ticket)
-
-	// Extract the 'username' field from the 'data' object
-	username, ok := data.(map[string]interface{})["username"]
+    username, ok := data.(map[string]interface{})["username"]
 	if !ok {
 		fmt.Println("Invalid session: missing 'username' field in data")
 		return false
 	}
 
-	fmt.Println("Extracted username:", username)
+    ticket, ok := data.(map[string]interface{})["ticket"]
+    if !ok {
+        fmt.Println("Invalid session: missing 'ticket' field in data")
+        return false
+    }
 
-	// Extract the 'CSRFPreventionToken' field from the 'data' object
-	csrfToken, ok := data.(map[string]interface{})["CSRFPreventionToken"]
-	if !ok {
-		fmt.Println("Invalid session: missing 'CSRFPreventionToken' field in data")
-		return false
-	}
+    csrfToken, ok := data.(map[string]interface{})["CSRFPreventionToken"]
+    if !ok {
+        fmt.Println("Invalid session: missing 'CSRFPreventionToken' field in data")
+        return false
+    }
 
-	fmt.Println("Extracted CSRFPreventionToken:", csrfToken)
+    client := createHTTPClient(trust)
 
-	// Create a custom HTTP client if trust is true
-	client := &http.Client{}
-	if trust {
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		client = &http.Client{Transport: tr}
-	}
+    ticketStr, ok := ticket.(string)
+    if !ok {
+        fmt.Println("Error: ticket is not a string")
+        return false
+    }
 
-	// Prepare the payload for the POST request
-	ticketStr, ok := ticket.(string)
-	if !ok {
-		fmt.Println("Error: ticket is not a string")
-		return false
-	}
-	payload := fmt.Sprintf("username=%s&password=%s", username, url.QueryEscape(ticketStr))
-    fmt.Println("Payload:", payload)
+    payload := fmt.Sprintf("username=%s&password=%s", username, url.QueryEscape(ticketStr))
+    headers := map[string]string{
+        "Content-Type":          "application/x-www-form-urlencoded; charset=UTF-8",
+    }
 
-	// Make the HTTP POST request
-	req, err := http.NewRequest("POST", uri, bytes.NewBuffer([]byte(payload)))
-	if err != nil {
-		fmt.Println("Error creating POST request:", err)
-		return false
-	}
-	// Set charset=UTF-8 in the Content-Type header
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
+    req, err := createHTTPRequest("POST", uri, payload, headers, []*http.Cookie{
+        {
+            Name:  "PVEAuthCookie",
+            Value: url.QueryEscape(ticketStr),
+        },
+    })
+    if err != nil {
+        fmt.Println("Error creating POST request:", err)
+        return false
+    }
 
-	// Use a custom approach to set headers with exact casing
-	req.Header = http.Header{} // Reset headers to avoid normalization
-	req.Header["CSRFPreventionToken"] = []string{csrfToken.(string)} // Set exact casing
+    req.Header = http.Header{} // Reset headers to avoid normalization
+	req.Header["CSRFPreventionToken"] = []string{csrfToken.(string)} 
 
-	// Add the PVEAuthCookie to the request as a cookie
-	cookie := &http.Cookie{
-		Name:  "PVEAuthCookie",
-		Value: url.QueryEscape(ticketStr), // Use URL encoding instead of base64
-	}
-	req.AddCookie(cookie)
-
-    fmt.Println("Cookie:", cookie)
-
-	// Print the full HTTP request for debugging
-	fmt.Println("--- HTTP Request ---")
+    fmt.Println("--- HTTP Request ---")
 	fmt.Printf("Method: %s\n", req.Method)
 	fmt.Printf("URL: %s\n", req.URL.String())
 	fmt.Println("Headers:")
@@ -311,47 +308,18 @@ func validateSession(trust bool) bool {
 	}
 	fmt.Println("--------------------")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error validating session:", err)
-		return false
-	}
-	defer resp.Body.Close()
+    resp, err := client.Do(req)
+    if err != nil {
+        fmt.Println("Error validating session:", err)
+        return false
+    }
 
-	if resp.StatusCode != 200 {
-		fmt.Printf("Session validation failed with status code %d\n", resp.StatusCode)
-		//return false
-	}
+    _, err = handleHTTPResponse(resp)
+    if err != nil {
+        fmt.Println("Session validation failed:", err)
+        return false
+    }
 
-    // Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response:", err)
-		return false
-	}
-
-    // Print the full response body for debugging
-	fmt.Println("Response Body:", string(body))
-
-	if resp.StatusCode != 200 {
-		fmt.Printf("Session validation failed with status code %d\n", resp.StatusCode)
-		//return false
-	}
-
-    fmt.Println("Response:", string(body))
-
-	// Print the full HTTP response for debugging
-	fmt.Println("--- HTTP Response ---")
-	fmt.Printf("Status Code: %d\n", resp.StatusCode)
-	fmt.Println("Headers:")
-	for key, values := range resp.Header {
-		for _, value := range values {
-			fmt.Printf("  %s: %s\n", key, value)
-		}
-	}
-	fmt.Println("Body:")
-	fmt.Println(string(body))
-	fmt.Println("--------------------")
-
-	return true
+    fmt.Println("Session is valid.")
+    return true
 }
