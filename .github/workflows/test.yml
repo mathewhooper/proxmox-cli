@@ -28,6 +28,12 @@ jobs:
       - name: Install dependencies
         run: go mod tidy
 
+      - name: Install go-junit-report
+        run: go install github.com/jstemmer/go-junit-report@latest
+        env:
+          GOPATH: ${{ runner.tool_cache }}/go
+          GOBIN: ${{ runner.tool_cache }}/go/bin
+
       - name: Run tests and save results
         run: go test -v 2>&1 ./... | go-junit-report -set-exit-code > report.xml
 
