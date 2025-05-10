@@ -16,6 +16,10 @@ import (
 	"golang.org/x/term"
 )
 
+// NewLoginCommand creates a new Cobra command for logging in to a Proxmox server.
+//
+// Returns:
+// - *cobra.Command: The login command.
 func NewLoginCommand() *cobra.Command {
 	var server string
     var username string
@@ -54,6 +58,10 @@ func NewLoginCommand() *cobra.Command {
 	return loginCmd
 }
 
+// ValidateLoginCommand creates a new Cobra command for validating the current session.
+//
+// Returns:
+// - *cobra.Command: The validate command.
 func ValidateLoginCommand() *cobra.Command {
 	var trust bool
 	var logLevel bool
@@ -81,7 +89,15 @@ func ValidateLoginCommand() *cobra.Command {
     return validateCmd
 }
 
-// Refactor loginToProxmox to use helper functions
+// loginToProxmox handles the login process to a Proxmox server.
+//
+// Parameters:
+// - server: The Proxmox server URL.
+// - port: The Proxmox server port.
+// - httpScheme: The HTTP scheme (http or https).
+// - username: The username for Proxmox.
+// - password: The password for Proxmox.
+// - trust: A boolean indicating whether to trust SSL certificates.
 func loginToProxmox(server string, port int, httpScheme string, username string, password string, trust bool) {
     uri := fmt.Sprintf("%s://%s:%d/api2/json/access/ticket", httpScheme, server, port)
     client := helpers.CreateHTTPClient(trust)
@@ -125,7 +141,13 @@ func loginToProxmox(server string, port int, httpScheme string, username string,
     }
 }
 
-// Refactor validateSession to use helper functions
+// validateSession validates the current session by checking the session file and making a request to the Proxmox server.
+//
+// Parameters:
+// - trust: A boolean indicating whether to trust SSL certificates.
+//
+// Returns:
+// - bool: True if the session is valid, false otherwise.
 func validateSession(trust bool) bool {
     sessionData, err := helpers.ReadSessionFile()
     if err != nil {
