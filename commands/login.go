@@ -2,15 +2,14 @@ package commands
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
-	"os/user"
-	"path/filepath"
+
+	"proxmox-cli/helpers"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -74,100 +73,17 @@ func ValidateLoginCommand() *cobra.Command {
     return validateCmd
 }
 
-// Helper function to create an HTTP client
-func createHTTPClient(trust bool) *http.Client {
-    if trust {
-        tr := &http.Transport{
-            TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-        }
-        return &http.Client{Transport: tr}
-    }
-    return &http.Client{}
-}
-
-// Helper function to create an HTTP request
-func createHTTPRequest(method, url, payload string, headers map[string]string, cookies []*http.Cookie) (*http.Request, error) {
-    req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(payload)))
-    if err != nil {
-        return nil, err
-    }
-    for key, value := range headers {
-        req.Header.Set(key, value)
-    }
-    for _, cookie := range cookies {
-        req.AddCookie(cookie)
-    }
-    return req, nil
-}
-
-// Helper function to handle HTTP responses
-func handleHTTPResponse(resp *http.Response) (string, error) {
-    defer resp.Body.Close()
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return "", err
-    }
-    if resp.StatusCode != 200 {
-        return "", fmt.Errorf("received status code %d: %s", resp.StatusCode, string(body))
-    }
-    return string(body), nil
-}
-
-// Helper function to read session data from file
-func readSessionFile() (map[string]interface{}, error) {
-    usr, err := user.Current()
-    if err != nil {
-        return nil, err
-    }
-    sessionFilePath := filepath.Join(usr.HomeDir, ".proxmox", "session")
-    file, err := os.Open(sessionFilePath)
-    if err != nil {
-        return nil, err
-    }
-    defer file.Close()
-
-    var sessionData map[string]interface{}
-    decoder := json.NewDecoder(file)
-    if err := decoder.Decode(&sessionData); err != nil {
-        return nil, err
-    }
-    return sessionData, nil
-}
-
-// Helper function to write session data to file
-func writeSessionFile(data map[string]interface{}) error {
-    usr, err := user.Current()
-    if err != nil {
-        return err
-    }
-    dirPath := filepath.Join(usr.HomeDir, ".proxmox")
-    if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-        if err := os.MkdirAll(dirPath, 0755); err != nil {
-            return err
-        }
-    }
-    filePath := filepath.Join(dirPath, "session")
-    file, err := os.Create(filePath)
-    if err != nil {
-        return err
-    }
-    defer file.Close()
-
-    encoder := json.NewEncoder(file)
-    return encoder.Encode(data)
-}
-
 // Refactor loginToProxmox to use helper functions
 func loginToProxmox(server string, port int, httpScheme string, username string, password string, trust bool) {
     uri := fmt.Sprintf("%s://%s:%d/api2/json/access/ticket", httpScheme, server, port)
-    client := createHTTPClient(trust)
+    client := helpers.CreateHTTPClient(trust)
 
     payload := fmt.Sprintf("username=%s&password=%s&realm=pam&new-format=1", username, password)
     headers := map[string]string{
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
     }
 
-    req, err := createHTTPRequest("POST", uri, payload, headers, nil)
+    req, err := helpers.CreateHTTPRequest("POST", uri, payload, headers, nil)
     if err != nil {
         fmt.Println("Error creating request:", err)
         return
@@ -179,7 +95,7 @@ func loginToProxmox(server string, port int, httpScheme string, username string,
         return
     }
 
-    body, err := handleHTTPResponse(resp)
+    body, err := helpers.HandleHTTPResponse(resp)
     if err != nil {
         fmt.Println("Error:", err)
         return
@@ -194,7 +110,7 @@ func loginToProxmox(server string, port int, httpScheme string, username string,
         "response":   body,
     }
 
-    if err := writeSessionFile(sessionData); err != nil {
+    if err := helpers.WriteSessionFile(sessionData); err != nil {
         fmt.Println("Error writing session data to file:", err)
     } else {
         fmt.Println("Authenticated!")
@@ -203,7 +119,7 @@ func loginToProxmox(server string, port int, httpScheme string, username string,
 
 // Refactor validateSession to use helper functions
 func validateSession(trust bool) bool {
-    sessionData, err := readSessionFile()
+    sessionData, err := helpers.ReadSessionFile()
     if err != nil {
         fmt.Println("Error reading session file:", err)
         return false
@@ -265,7 +181,7 @@ func validateSession(trust bool) bool {
         return false
     }
 
-    client := createHTTPClient(trust)
+    client := helpers.CreateHTTPClient(trust)
 
     ticketStr, ok := ticket.(string)
     if !ok {
@@ -278,7 +194,7 @@ func validateSession(trust bool) bool {
         "Content-Type":          "application/x-www-form-urlencoded; charset=UTF-8",
     }
 
-    req, err := createHTTPRequest("POST", uri, payload, headers, []*http.Cookie{
+    req, err := helpers.CreateHTTPRequest("POST", uri, payload, headers, []*http.Cookie{
         {
             Name:  "PVEAuthCookie",
             Value: url.QueryEscape(ticketStr),
@@ -314,7 +230,7 @@ func validateSession(trust bool) bool {
         return false
     }
 
-    _, err = handleHTTPResponse(resp)
+    _, err = helpers.HandleHTTPResponse(resp)
     if err != nil {
         fmt.Println("Session validation failed:", err)
         return false
