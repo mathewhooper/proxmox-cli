@@ -1,4 +1,4 @@
-package cluster
+package sdn
 
 import (
 	"fmt"
@@ -8,8 +8,8 @@ import (
 
 func ZoneCommand() *cobra.Command {
     var zoneCmd = &cobra.Command{
-        Use:   "sdn",
-        Short: "Manage Software Defined Networking (SDN) in Proxmox",
+        Use:   "zone",
+        Short: "Manages zones in Proxmox",
     }
 
     // Add the create-zone, delete-zone, update-zone, and apply-config subcommands
@@ -26,7 +26,7 @@ func createZoneCommand() *cobra.Command {
 	var zoneType string
 
 	var createZoneCmd = &cobra.Command{
-		Use:   "create-zone",
+		Use:   "create",
 		Short: "Create a new SDN zone",
 		Run: func(cmd *cobra.Command, args []string) {
 			if zoneName == "" || zoneType == "" {
@@ -50,7 +50,7 @@ func deleteZoneCommand() *cobra.Command {
 	var zoneName string
 
 	var deleteZoneCmd = &cobra.Command{
-		Use:   "delete-zone",
+		Use:   "delete",
 		Short: "Delete an existing SDN zone",
 		Run: func(cmd *cobra.Command, args []string) {
 			if zoneName == "" {
@@ -74,7 +74,7 @@ func updateZoneCommand() *cobra.Command {
 	var newZoneType string
 
 	var updateZoneCmd = &cobra.Command{
-		Use:   "update-zone",
+		Use:   "update",
 		Short: "Update an existing SDN zone",
 		Run: func(cmd *cobra.Command, args []string) {
 			if zoneName == "" || newZoneType == "" {

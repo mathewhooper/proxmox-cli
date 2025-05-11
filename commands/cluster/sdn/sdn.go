@@ -1,9 +1,7 @@
-package cluster
+package sdn
 
 import (
 	"fmt"
-
-	"proxmox-cli/commands/cluster/sdn"
 
 	"github.com/spf13/cobra"
 )
@@ -16,8 +14,8 @@ func SDNCommand() *cobra.Command {
 	}
 
 	// Add the create-zone and delete-zone subcommands
-	sdnCmd.AddCommand(sdn.ZoneCommand())
-    sdnCmd.AddCommand(sdn.VnetCommand())
+	sdnCmd.AddCommand(ZoneCommand())
+    sdnCmd.AddCommand(VnetCommand())
     sdnCmd.AddCommand(applyZoneConfigCommand())
 
 	return sdnCmd
