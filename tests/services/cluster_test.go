@@ -16,7 +16,7 @@ func TestClusterService_ListResources_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": [
 				{
@@ -96,7 +96,7 @@ func TestClusterService_ListResources_SessionError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{}
+	mockHTTP := &mockHTTPService{}
 	mockSession := &mockSessionService{
 		readSessionFileFunc: func() (services.SessionData, error) {
 			return services.SessionData{}, assert.AnError
@@ -114,7 +114,7 @@ func TestClusterService_ListResources_HttpError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -137,7 +137,7 @@ func TestClusterService_ListResources_InvalidJSON(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: 200,
@@ -163,7 +163,7 @@ func TestClusterService_GetStatus_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": [
 				{
@@ -236,7 +236,7 @@ func TestClusterService_GetStatus_SessionError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{}
+	mockHTTP := &mockHTTPService{}
 	mockSession := &mockSessionService{
 		readSessionFileFunc: func() (services.SessionData, error) {
 			return services.SessionData{}, assert.AnError
@@ -254,7 +254,7 @@ func TestClusterService_GetStatus_HttpError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -277,7 +277,7 @@ func TestClusterService_GetStatus_InvalidJSON(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: 200,
@@ -303,7 +303,7 @@ func TestClusterService_GetStatus_EmptyData(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": []}`
 			return &http.Response{

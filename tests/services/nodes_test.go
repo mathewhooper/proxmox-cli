@@ -33,7 +33,7 @@ func TestNodesService_ListNodes_Success(t *testing.T) {
 		},
 	}
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": [
 				{"node": "pve1", "status": "online", "cpu": 0.15, "maxcpu": 8, "mem": 8589934592, "maxmem": 17179869184, "uptime": 86400}
@@ -65,7 +65,7 @@ func TestNodesService_ListNodes_SessionError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHTTP := &mockHttpService{}
+	mockHTTP := &mockHTTPService{}
 	mockSession := &mockSessionService{
 		readSessionFileFunc: func() (services.SessionData, error) {
 			return services.SessionData{}, assert.AnError
@@ -100,7 +100,7 @@ func TestNodesService_ListNodes_HttpError(t *testing.T) {
 		},
 	}
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -140,7 +140,7 @@ func TestNodesService_GetNodeStatus_Success(t *testing.T) {
 		},
 	}
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": {
 				"cpu": 0.25,
@@ -198,7 +198,7 @@ func TestNodesService_GetNodeStatus_HttpError(t *testing.T) {
 		},
 	}
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -238,7 +238,7 @@ func TestNodesService_GetNodeVersion_Success(t *testing.T) {
 		},
 	}
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": {
 				"version": "7.0",
@@ -289,7 +289,7 @@ func TestNodesService_GetNodeVersion_InvalidJSON(t *testing.T) {
 		},
 	}
 
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: 200,

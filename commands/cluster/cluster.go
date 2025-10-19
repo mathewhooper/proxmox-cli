@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewClusterCommand creates a new Cobra command for cluster-related operations.
+// ClusterCommand creates a new Cobra command for cluster-related operations.
 func ClusterCommand() *cobra.Command {
 	var clusterCmd = &cobra.Command{
 		Use:   "cluster",

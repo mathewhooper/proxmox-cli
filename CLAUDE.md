@@ -394,14 +394,14 @@ func ListNodes(logger *logrus.Logger, trust bool) ([]Node, error) {
 1. Create test file in `tests/` directory mirroring source structure
 2. Use mock services to isolate logic
 3. Test success cases, error cases, and edge cases
-4. Follow existing test patterns with `mockHttpService` and `mockSessionService`
+4. Follow existing test patterns with `mockHTTPService` and `mockSessionService`
 
 Example test:
 
 ```go
 func TestListNodes_Success(t *testing.T) {
     logger := logrus.New()
-    mockHTTP := &mockHttpService{
+    mockHTTP := &mockHTTPService{
         getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
             body := `{"data": [{"node": "pve1", "status": "online"}]}`
             return &http.Response{
@@ -432,7 +432,7 @@ func TestListNodes_Success(t *testing.T) {
 
 Each service interface has a corresponding mock in test files:
 
-- `mockHttpService` - mocks HTTP operations
+- `mockHTTPService` - mocks HTTP operations
 - `mockSessionService` - mocks session file operations
 - Mocks use function fields to allow per-test behavior customization
 
