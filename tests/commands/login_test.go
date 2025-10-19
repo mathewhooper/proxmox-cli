@@ -38,7 +38,7 @@ func TestValidateLoginCommand(t *testing.T) {
 
 func TestLoginCommandFlags(t *testing.T) {
 	cmd := commands.LoginCommand()
-	flags := []string{"server", "username", "port", "httpScheme", "trust", "show-log"}
+	flags := []string{"server", "username", "port", "httpScheme", "show-log"}
 
 	for _, flag := range flags {
 		if cmd.Flags().Lookup(flag) == nil {
@@ -49,7 +49,7 @@ func TestLoginCommandFlags(t *testing.T) {
 
 func TestValidateLoginCommandFlags(t *testing.T) {
 	cmd := commands.ValidateLoginCommand()
-	flags := []string{"trust", "show-log"}
+	flags := []string{"show-log"}
 
 	for _, flag := range flags {
 		if cmd.Flags().Lookup(flag) == nil {

@@ -3,6 +3,11 @@ package cluster
 import (
 	"fmt"
 
+	"proxmox-cli/config"
+	"proxmox-cli/services"
+
+	"encoding/json"
+
 	"github.com/spf13/cobra"
 )
 
@@ -95,4 +100,44 @@ func updateVnetCommand() *cobra.Command {
 	updateCmd.Flags().StringVarP(&newConfig, "config", "c", "", "New configuration for the VNet")
 
 	return updateCmd
+}
+
+func createVnet(vnetName string, trust bool) bool {
+	sessionService, err := services.NewSessionService(config.Logger)
+	if err != nil {
+		config.Logger.Error("Error initializing session service: ", err)
+		return false
+	}
+
+	sessionData, err := sessionService.ReadSessionFile()
+	if err != nil {
+		config.Logger.Error("Error reading session file: ", err)
+		return false
+	}
+
+	uri := fmt.Sprintf("%s://%s:%d/api2/json/cluster/sdn", sessionData.HttpScheme, sessionData.Server, sessionData.Port)
+
+	httpService := services.NewHttpService(config.Logger, trust)
+
+	payload := fmt.Sprintf("name=%s", vnetName)
+	headers := map[string]string{
+		"Content-Type":        "application/x-www-form-urlencoded; charset=UTF-8",
+		"CSRFPreventionToken": sessionData.Response.Data.CSRFPreventionToken,
+	}
+
+	body, err := httpService.Post(uri, payload, headers, nil)
+	if err != nil {
+		config.Logger.Error("Error creating vnet: ", err)
+		return false
+	}
+
+	config.Logger.Info("Response: ", body)
+
+	var resp services.SessionDataResponse
+	if err := json.Unmarshal([]byte(body), &resp); err != nil {
+		config.Logger.Error("Error parsing response JSON: ", err)
+		return false
+	}
+
+	return true
 }
