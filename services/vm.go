@@ -40,15 +40,15 @@ type VMConfig struct {
 
 // VMStatus represents VM status details
 type VMStatus struct {
-	Status  string  `json:"status"`
-	VMID    int     `json:"vmid"`
-	CPU     float64 `json:"cpu,omitempty"`
-	CPUs    int     `json:"cpus,omitempty"`
-	Mem     int64   `json:"mem,omitempty"`
-	MaxMem  int64   `json:"maxmem,omitempty"`
-	Uptime  int64   `json:"uptime,omitempty"`
-	Name    string  `json:"name,omitempty"`
-	QMPStatus string `json:"qmpstatus,omitempty"`
+	Status    string  `json:"status"`
+	VMID      int     `json:"vmid"`
+	CPU       float64 `json:"cpu,omitempty"`
+	CPUs      int     `json:"cpus,omitempty"`
+	Mem       int64   `json:"mem,omitempty"`
+	MaxMem    int64   `json:"maxmem,omitempty"`
+	Uptime    int64   `json:"uptime,omitempty"`
+	Name      string  `json:"name,omitempty"`
+	QMPStatus string  `json:"qmpstatus,omitempty"`
 }
 
 // VMListResponse represents the API response for VM list

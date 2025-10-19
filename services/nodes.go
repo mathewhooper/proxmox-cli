@@ -24,23 +24,23 @@ type Node struct {
 
 // NodeStatus represents detailed node status information
 type NodeStatus struct {
-	CPU        float64          `json:"cpu"`
-	CPUInfo    NodeCPUInfo      `json:"cpuinfo"`
-	Memory     NodeMemoryInfo   `json:"memory"`
-	RootFS     NodeRootFSInfo   `json:"rootfs"`
-	Swap       NodeSwapInfo     `json:"swap"`
-	Uptime     int64            `json:"uptime"`
-	LoadAvg    []float64        `json:"loadavg"`
-	KVersion   string           `json:"kversion"`
-	Wait       float64          `json:"wait"`
-	PVEVersion string           `json:"pveversion"`
+	CPU        float64        `json:"cpu"`
+	CPUInfo    NodeCPUInfo    `json:"cpuinfo"`
+	Memory     NodeMemoryInfo `json:"memory"`
+	RootFS     NodeRootFSInfo `json:"rootfs"`
+	Swap       NodeSwapInfo   `json:"swap"`
+	Uptime     int64          `json:"uptime"`
+	LoadAvg    []float64      `json:"loadavg"`
+	KVersion   string         `json:"kversion"`
+	Wait       float64        `json:"wait"`
+	PVEVersion string         `json:"pveversion"`
 }
 
 type NodeCPUInfo struct {
-	CPUs   int    `json:"cpus"`
-	Model  string `json:"model"`
-	Sockets int   `json:"sockets"`
-	MHZ    string `json:"mhz"`
+	CPUs    int    `json:"cpus"`
+	Model   string `json:"model"`
+	Sockets int    `json:"sockets"`
+	MHZ     string `json:"mhz"`
 }
 
 type NodeMemoryInfo struct {

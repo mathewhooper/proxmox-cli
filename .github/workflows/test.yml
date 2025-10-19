@@ -43,25 +43,30 @@ jobs:
             exit 1
           fi
 
+      - name: Run linting checks
+        run: |
+          echo "::group::Installing linters"
+          # Install golangci-lint
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+
+          # Install additional linters
+          go install golang.org/x/lint/golint@latest
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install github.com/kisielk/errcheck@latest
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          echo "::endgroup::"
+
+          echo "::group::Running linting checks"
+          chmod +x scripts/lint.sh
+          ./scripts/lint.sh
+          echo "::endgroup::"
+
       - name: Build project
         run: |
           echo "::group::Building project"
           go build -v -o proxmox-cli .
           echo "::endgroup::"
           echo "✅ Build successful"
-
-      - name: Run golint (optional)
-        continue-on-error: true
-        run: |
-          go install golang.org/x/lint/golint@latest
-          golint ./... || true
-
-      - name: Run go vet
-        run: |
-          echo "::group::Running go vet"
-          go vet ./...
-          echo "::endgroup::"
-          echo "✅ go vet passed"
 
       - name: Install test dependencies
         run: |
