@@ -13,8 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// mockHttpService is a mock implementation of the HTTP service used for testing AuthService.
-type mockHttpService struct {
+// mockHTTPService is a mock implementation of the HTTP service used for testing AuthService.
+type mockHTTPService struct {
 	postFunc   func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error)
 	getFunc    func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error)
 	putFunc    func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error)
@@ -22,12 +22,12 @@ type mockHttpService struct {
 }
 
 // Post mocks the HTTP POST request for testing purposes.
-func (m *mockHttpService) Post(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
+func (m *mockHTTPService) Post(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 	return m.postFunc(uri, payload, headers, cookies)
 }
 
 // Get mocks the HTTP GET request for testing purposes.
-func (m *mockHttpService) Get(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
+func (m *mockHTTPService) Get(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 	if m.getFunc != nil {
 		return m.getFunc(url, headers, cookies)
 	}
@@ -35,7 +35,7 @@ func (m *mockHttpService) Get(url string, headers map[string]string, cookies []*
 }
 
 // Put mocks the HTTP PUT request for testing purposes.
-func (m *mockHttpService) Put(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
+func (m *mockHTTPService) Put(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 	if m.putFunc != nil {
 		return m.putFunc(uri, payload, headers, cookies)
 	}
@@ -43,7 +43,7 @@ func (m *mockHttpService) Put(uri, payload string, headers map[string]string, co
 }
 
 // Delete mocks the HTTP DELETE request for testing purposes.
-func (m *mockHttpService) Delete(url string, headers map[string]string, cookies []*http.Cookie) (string, error) {
+func (m *mockHTTPService) Delete(url string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 	if m.deleteFunc != nil {
 		return m.deleteFunc(url, headers, cookies)
 	}
@@ -90,7 +90,7 @@ func TestAuthService_ValidateSession_Success(t *testing.T) {
 			},
 		},
 	}
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{}}`, nil
 		},
@@ -125,7 +125,7 @@ func TestAuthService_ValidateSession_HttpFailure(t *testing.T) {
 			},
 		},
 	}
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return "", fmt.Errorf("network error")
 		},
@@ -160,7 +160,7 @@ func TestAuthService_ValidateSession_UpdateSessionFieldFailure(t *testing.T) {
 			},
 		},
 	}
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{}}`, nil
 		},
@@ -188,7 +188,7 @@ func TestAuthService_ValidateSession_InvalidSessionData(t *testing.T) {
 			}{},
 		},
 	}
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{}}`, nil
 		},
@@ -209,7 +209,7 @@ func TestAuthService_ValidateSession_InvalidSessionData(t *testing.T) {
 
 func TestAuthService_LoginToProxmox_Success(t *testing.T) {
 	logger := logrus.New()
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{"username":"user","ticket":"ticket","CSRFPreventionToken":"csrf"}}`, nil
 		},
@@ -228,7 +228,7 @@ func TestAuthService_LoginToProxmox_Success(t *testing.T) {
 
 func TestAuthService_LoginToProxmox_HttpFailure(t *testing.T) {
 	logger := logrus.New()
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return "", fmt.Errorf("network error")
 		},
@@ -247,7 +247,7 @@ func TestAuthService_LoginToProxmox_HttpFailure(t *testing.T) {
 
 func TestAuthService_LoginToProxmox_InvalidJson(t *testing.T) {
 	logger := logrus.New()
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return "not json", nil
 		},
@@ -266,7 +266,7 @@ func TestAuthService_LoginToProxmox_InvalidJson(t *testing.T) {
 
 func TestAuthService_LoginToProxmox_WriteSessionFileFailure(t *testing.T) {
 	logger := logrus.New()
-	mockHTTP := &mockHttpService{
+	mockHTTP := &mockHTTPService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{"username":"user","ticket":"ticket","CSRFPreventionToken":"csrf"}}`, nil
 		},

@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewSDNCommand creates a new Cobra command for SDN-related operations.
+// SDNCommand creates a new Cobra command for SDN-related operations.
 func SDNCommand() *cobra.Command {
 	var sdnCmd = &cobra.Command{
 		Use:   "sdn",
