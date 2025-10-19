@@ -33,7 +33,7 @@ func TestNodesService_ListNodes_Success(t *testing.T) {
 		},
 	}
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": [
 				{"node": "pve1", "status": "online", "cpu": 0.15, "maxcpu": 8, "mem": 8589934592, "maxmem": 17179869184, "uptime": 86400}
@@ -51,7 +51,7 @@ func TestNodesService_ListNodes_Success(t *testing.T) {
 		},
 	}
 
-	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHttp, mockSession)
+	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHTTP, mockSession)
 	nodes, err := nodesService.ListNodes()
 
 	assert.NoError(t, err)
@@ -65,14 +65,14 @@ func TestNodesService_ListNodes_SessionError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{}
+	mockHTTP := &mockHttpService{}
 	mockSession := &mockSessionService{
 		readSessionFileFunc: func() (services.SessionData, error) {
 			return services.SessionData{}, assert.AnError
 		},
 	}
 
-	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHttp, mockSession)
+	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHTTP, mockSession)
 	nodes, err := nodesService.ListNodes()
 
 	assert.Error(t, err)
@@ -100,7 +100,7 @@ func TestNodesService_ListNodes_HttpError(t *testing.T) {
 		},
 	}
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -112,7 +112,7 @@ func TestNodesService_ListNodes_HttpError(t *testing.T) {
 		},
 	}
 
-	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHttp, mockSession)
+	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHTTP, mockSession)
 	nodes, err := nodesService.ListNodes()
 
 	assert.Error(t, err)
@@ -140,7 +140,7 @@ func TestNodesService_GetNodeStatus_Success(t *testing.T) {
 		},
 	}
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": {
 				"cpu": 0.25,
@@ -167,7 +167,7 @@ func TestNodesService_GetNodeStatus_Success(t *testing.T) {
 		},
 	}
 
-	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHttp, mockSession)
+	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHTTP, mockSession)
 	status, err := nodesService.GetNodeStatus("pve1")
 
 	assert.NoError(t, err)
@@ -198,7 +198,7 @@ func TestNodesService_GetNodeStatus_HttpError(t *testing.T) {
 		},
 	}
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -210,7 +210,7 @@ func TestNodesService_GetNodeStatus_HttpError(t *testing.T) {
 		},
 	}
 
-	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHttp, mockSession)
+	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHTTP, mockSession)
 	status, err := nodesService.GetNodeStatus("pve1")
 
 	assert.Error(t, err)
@@ -238,7 +238,7 @@ func TestNodesService_GetNodeVersion_Success(t *testing.T) {
 		},
 	}
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": {
 				"version": "7.0",
@@ -258,7 +258,7 @@ func TestNodesService_GetNodeVersion_Success(t *testing.T) {
 		},
 	}
 
-	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHttp, mockSession)
+	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHTTP, mockSession)
 	version, err := nodesService.GetNodeVersion("pve1")
 
 	assert.NoError(t, err)
@@ -289,7 +289,7 @@ func TestNodesService_GetNodeVersion_InvalidJSON(t *testing.T) {
 		},
 	}
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: 200,
@@ -304,7 +304,7 @@ func TestNodesService_GetNodeVersion_InvalidJSON(t *testing.T) {
 		},
 	}
 
-	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHttp, mockSession)
+	nodesService := services.NewNodesServiceWithDeps(logger, true, mockHTTP, mockSession)
 	version, err := nodesService.GetNodeVersion("pve1")
 
 	assert.Error(t, err)
