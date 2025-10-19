@@ -57,12 +57,44 @@ Unit tests are provided for core services, following the same directory structur
 
 - **Mocking**: The tests use mock implementations for HTTP and session services to isolate logic and ensure test reliability.
 - **Test Examples**: See `TestAuthService_LoginToProxmox_Success` and `TestAuthService_ValidateSession_Failure` for sample test cases.
+- **Test Coverage**: The project maintains comprehensive test coverage across all services.
 
-To run all tests:
+### Running Tests Locally
 
 ```sh
+# Run all tests
 go test ./tests/...
+
+# Run tests with verbose output
+go test -v ./tests/...
+
+# Run tests with coverage
+go test -v -coverprofile=coverage.out ./...
+
+# View coverage report
+go tool cover -func=coverage.out
+
+# View coverage in browser
+go tool cover -html=coverage.out
 ```
+
+### Continuous Integration
+
+This project uses GitHub Actions for automated testing. On every pull request:
+
+- ✅ **Build Verification**: Ensures the project compiles successfully
+- ✅ **Code Quality**: Runs `go vet` and `golint` to catch issues
+- ✅ **Test Execution**: Runs all unit tests with coverage reporting
+- ✅ **PR Reporting**: Posts detailed results as a comment on the PR
+
+**Pull Request Comments Include**:
+- Build status (success/failure)
+- Total tests run and number of failures
+- List of failed tests (if any)
+- Test coverage percentage
+- Full test output (in collapsible section)
+
+See [.github/workflows/README.md](.github/workflows/README.md) for more details on the CI/CD pipeline.
 
 ## Development Process
 
