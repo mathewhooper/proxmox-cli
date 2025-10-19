@@ -78,12 +78,37 @@ go tool cover -func=coverage.out
 go tool cover -html=coverage.out
 ```
 
+### Code Quality and Linting
+
+This project enforces strict code quality standards through comprehensive linting:
+
+```bash
+# Run all linting checks
+make lint
+
+# Format code
+make fmt
+
+# Run all CI checks (format, lint, vet, test)
+make ci
+```
+
+**Linting Tools**:
+- ✅ **gofmt** - Code formatting (required)
+- ✅ **go vet** - Static analysis (required)
+- ✅ **golangci-lint** - Comprehensive linting
+- ✅ **staticcheck** - Advanced analysis
+- ✅ **errcheck** - Error handling verification
+- ✅ **gosec** - Security vulnerability scanning
+
+See [docs/LINTING.md](docs/LINTING.md) for detailed linting documentation.
+
 ### Continuous Integration
 
 This project uses GitHub Actions for automated testing. On every pull request:
 
+- ✅ **Linting**: Runs comprehensive code quality checks (fails fast)
 - ✅ **Build Verification**: Ensures the project compiles successfully
-- ✅ **Code Quality**: Runs `go vet` and `golint` to catch issues
 - ✅ **Test Execution**: Runs all unit tests with coverage reporting
 - ✅ **PR Reporting**: Posts detailed results as a comment on the PR
 
