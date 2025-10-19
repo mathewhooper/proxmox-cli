@@ -35,7 +35,7 @@ func TestVMService_ListVMs_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": [
 				{
@@ -74,7 +74,7 @@ func TestVMService_ListVMs_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	vms, err := vmService.ListVMs("pve1")
 
 	assert.NoError(t, err)
@@ -90,14 +90,14 @@ func TestVMService_ListVMs_SessionError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{}
+	mockHTTP := &mockHttpService{}
 	mockSession := &mockSessionService{
 		readSessionFileFunc: func() (services.SessionData, error) {
 			return services.SessionData{}, assert.AnError
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	vms, err := vmService.ListVMs("pve1")
 
 	assert.Error(t, err)
@@ -108,7 +108,7 @@ func TestVMService_ListVMs_HttpError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -120,7 +120,7 @@ func TestVMService_ListVMs_HttpError(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	vms, err := vmService.ListVMs("pve1")
 
 	assert.Error(t, err)
@@ -131,7 +131,7 @@ func TestVMService_GetVMStatus_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": {
 				"status": "running",
@@ -157,7 +157,7 @@ func TestVMService_GetVMStatus_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	status, err := vmService.GetVMStatus("pve1", 100)
 
 	assert.NoError(t, err)
@@ -172,7 +172,7 @@ func TestVMService_StartVM_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data": "UPID:pve1:00001234:12345678:5F123456:qmstart:100:user@pam:"}`, nil
 		},
@@ -184,7 +184,7 @@ func TestVMService_StartVM_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.StartVM("pve1", 100)
 
 	assert.NoError(t, err)
@@ -196,7 +196,7 @@ func TestVMService_StopVM_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data": "UPID:pve1:00001234:12345678:5F123456:qmstop:100:user@pam:"}`, nil
 		},
@@ -208,7 +208,7 @@ func TestVMService_StopVM_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.StopVM("pve1", 100)
 
 	assert.NoError(t, err)
@@ -220,7 +220,7 @@ func TestVMService_ShutdownVM_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data": "UPID:pve1:00001234:12345678:5F123456:qmshutdown:100:user@pam:"}`, nil
 		},
@@ -232,7 +232,7 @@ func TestVMService_ShutdownVM_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.ShutdownVM("pve1", 100)
 
 	assert.NoError(t, err)
@@ -243,7 +243,7 @@ func TestVMService_RebootVM_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data": "UPID:pve1:00001234:12345678:5F123456:qmreboot:100:user@pam:"}`, nil
 		},
@@ -255,7 +255,7 @@ func TestVMService_RebootVM_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.RebootVM("pve1", 100)
 
 	assert.NoError(t, err)
@@ -266,7 +266,7 @@ func TestVMService_ResetVM_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data": "UPID:pve1:00001234:12345678:5F123456:qmreset:100:user@pam:"}`, nil
 		},
@@ -278,7 +278,7 @@ func TestVMService_ResetVM_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.ResetVM("pve1", 100)
 
 	assert.NoError(t, err)
@@ -289,7 +289,7 @@ func TestVMService_SuspendVM_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data": "UPID:pve1:00001234:12345678:5F123456:qmsuspend:100:user@pam:"}`, nil
 		},
@@ -301,7 +301,7 @@ func TestVMService_SuspendVM_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.SuspendVM("pve1", 100)
 
 	assert.NoError(t, err)
@@ -312,7 +312,7 @@ func TestVMService_ResumeVM_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data": "UPID:pve1:00001234:12345678:5F123456:qmresume:100:user@pam:"}`, nil
 		},
@@ -324,7 +324,7 @@ func TestVMService_ResumeVM_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.ResumeVM("pve1", 100)
 
 	assert.NoError(t, err)
@@ -335,7 +335,7 @@ func TestVMService_DeleteVM_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		deleteFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data": "UPID:pve1:00001234:12345678:5F123456:qmdestroy:100:user@pam:"}`, nil
 		},
@@ -347,7 +347,7 @@ func TestVMService_DeleteVM_Success(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.DeleteVM("pve1", 100)
 
 	assert.NoError(t, err)
@@ -359,7 +359,7 @@ func TestVMService_DeleteVM_HttpError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		deleteFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return "", assert.AnError
 		},
@@ -371,7 +371,7 @@ func TestVMService_DeleteVM_HttpError(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.DeleteVM("pve1", 100)
 
 	assert.Error(t, err)
@@ -382,14 +382,14 @@ func TestVMService_StartVM_SessionError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{}
+	mockHTTP := &mockHttpService{}
 	mockSession := &mockSessionService{
 		readSessionFileFunc: func() (services.SessionData, error) {
 			return services.SessionData{}, assert.AnError
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.StartVM("pve1", 100)
 
 	assert.Error(t, err)
@@ -400,7 +400,7 @@ func TestVMService_StartVM_HttpError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return "", assert.AnError
 		},
@@ -412,7 +412,7 @@ func TestVMService_StartVM_HttpError(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	taskID, err := vmService.StartVM("pve1", 100)
 
 	assert.Error(t, err)
@@ -423,7 +423,7 @@ func TestVMService_GetVMStatus_InvalidJSON(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: 200,
@@ -438,7 +438,7 @@ func TestVMService_GetVMStatus_InvalidJSON(t *testing.T) {
 		},
 	}
 
-	vmService := services.NewVMServiceWithDeps(logger, true, mockHttp, mockSession)
+	vmService := services.NewVMServiceWithDeps(logger, true, mockHTTP, mockSession)
 	status, err := vmService.GetVMStatus("pve1", 100)
 
 	assert.Error(t, err)

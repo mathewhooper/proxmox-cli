@@ -16,7 +16,7 @@ func TestStorageService_ListStorage_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": [
 				{
@@ -49,7 +49,7 @@ func TestStorageService_ListStorage_Success(t *testing.T) {
 		},
 	}
 
-	storageService := services.NewStorageServiceWithDeps(logger, true, mockHttp, mockSession)
+	storageService := services.NewStorageServiceWithDeps(logger, true, mockHTTP, mockSession)
 	storages, err := storageService.ListStorage()
 
 	assert.NoError(t, err)
@@ -66,14 +66,14 @@ func TestStorageService_ListStorage_SessionError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{}
+	mockHTTP := &mockHttpService{}
 	mockSession := &mockSessionService{
 		readSessionFileFunc: func() (services.SessionData, error) {
 			return services.SessionData{}, assert.AnError
 		},
 	}
 
-	storageService := services.NewStorageServiceWithDeps(logger, true, mockHttp, mockSession)
+	storageService := services.NewStorageServiceWithDeps(logger, true, mockHTTP, mockSession)
 	storages, err := storageService.ListStorage()
 
 	assert.Error(t, err)
@@ -84,7 +84,7 @@ func TestStorageService_ListStorage_HttpError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -96,7 +96,7 @@ func TestStorageService_ListStorage_HttpError(t *testing.T) {
 		},
 	}
 
-	storageService := services.NewStorageServiceWithDeps(logger, true, mockHttp, mockSession)
+	storageService := services.NewStorageServiceWithDeps(logger, true, mockHTTP, mockSession)
 	storages, err := storageService.ListStorage()
 
 	assert.Error(t, err)
@@ -107,7 +107,7 @@ func TestStorageService_ListStorage_InvalidJSON(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: 200,
@@ -122,7 +122,7 @@ func TestStorageService_ListStorage_InvalidJSON(t *testing.T) {
 		},
 	}
 
-	storageService := services.NewStorageServiceWithDeps(logger, true, mockHttp, mockSession)
+	storageService := services.NewStorageServiceWithDeps(logger, true, mockHTTP, mockSession)
 	storages, err := storageService.ListStorage()
 
 	assert.Error(t, err)
@@ -133,7 +133,7 @@ func TestStorageService_ListStorageContent_Success(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			body := `{"data": [
 				{
@@ -170,7 +170,7 @@ func TestStorageService_ListStorageContent_Success(t *testing.T) {
 		},
 	}
 
-	storageService := services.NewStorageServiceWithDeps(logger, true, mockHttp, mockSession)
+	storageService := services.NewStorageServiceWithDeps(logger, true, mockHTTP, mockSession)
 	contents, err := storageService.ListStorageContent("pve1", "local")
 
 	assert.NoError(t, err)
@@ -187,14 +187,14 @@ func TestStorageService_ListStorageContent_SessionError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{}
+	mockHTTP := &mockHttpService{}
 	mockSession := &mockSessionService{
 		readSessionFileFunc: func() (services.SessionData, error) {
 			return services.SessionData{}, assert.AnError
 		},
 	}
 
-	storageService := services.NewStorageServiceWithDeps(logger, true, mockHttp, mockSession)
+	storageService := services.NewStorageServiceWithDeps(logger, true, mockHTTP, mockSession)
 	contents, err := storageService.ListStorageContent("pve1", "local")
 
 	assert.Error(t, err)
@@ -205,7 +205,7 @@ func TestStorageService_ListStorageContent_HttpError(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return nil, assert.AnError
 		},
@@ -217,7 +217,7 @@ func TestStorageService_ListStorageContent_HttpError(t *testing.T) {
 		},
 	}
 
-	storageService := services.NewStorageServiceWithDeps(logger, true, mockHttp, mockSession)
+	storageService := services.NewStorageServiceWithDeps(logger, true, mockHTTP, mockSession)
 	contents, err := storageService.ListStorageContent("pve1", "local")
 
 	assert.Error(t, err)
@@ -228,7 +228,7 @@ func TestStorageService_ListStorageContent_InvalidJSON(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
 			return &http.Response{
 				StatusCode: 200,
@@ -243,7 +243,7 @@ func TestStorageService_ListStorageContent_InvalidJSON(t *testing.T) {
 		},
 	}
 
-	storageService := services.NewStorageServiceWithDeps(logger, true, mockHttp, mockSession)
+	storageService := services.NewStorageServiceWithDeps(logger, true, mockHTTP, mockSession)
 	contents, err := storageService.ListStorageContent("pve1", "local")
 
 	assert.Error(t, err)

@@ -13,6 +13,7 @@ The Proxmox VE API is a REST-like API that uses JSON as the primary data format,
 ## Development Commands
 
 ### Testing
+
 ```sh
 # Run all tests
 go test ./tests/...
@@ -31,6 +32,7 @@ go test -v ./tests/services/auth_test.go -run TestAuthService_LoginToProxmox_Suc
 ```
 
 ### Building and Running
+
 ```sh
 # Install dependencies
 go mod tidy
@@ -53,6 +55,7 @@ go build -o proxmox-cli
 The codebase follows a three-layer architecture:
 
 ### 1. Command Layer (`commands/`)
+
 - Built using [Cobra](https://github.com/spf13/cobra) for CLI structure
 - Commands are organized hierarchically:
   - `login` - Authenticate with Proxmox server
@@ -62,12 +65,15 @@ The codebase follows a three-layer architecture:
 - Commands handle CLI flags, user input, and delegate business logic to services
 
 ### 2. Service Layer (`services/`)
+
 - **AuthService** (`services/auth.go`): Handles authentication and session validation
+
   - Manages login flow and session renewal
   - Uses dependency injection for testability
   - Constructor pattern: `NewAuthService()` for production, `NewAuthServiceWithDeps()` for testing
 
 - **SessionService** (`services/session.go`): Manages session persistence
+
   - Stores session data in `~/.proxmox/session` as JSON
   - Validates all required fields on read
   - Provides typed access to session data (server, port, httpScheme, auth tokens)
@@ -78,6 +84,7 @@ The codebase follows a three-layer architecture:
   - All services implement interfaces (`HttpServiceInterface`, `SessionServiceInterface`) for mocking
 
 ### 3. Config Layer (`config/`)
+
 - **Logger** (`config/logger.go`): Global logrus logger instance
   - Default log level: `ErrorLevel` (can be changed with `--show-log` flag)
   - Set dynamically via `config.SetLogLevel()`
@@ -87,35 +94,43 @@ The codebase follows a three-layer architecture:
 ## Key Design Patterns
 
 ### Dependency Injection
+
 Services use constructor injection to allow mocking in tests:
+
 ```go
 // Production usage
 authService := services.NewAuthService(config.Logger, config.Trust)
 
 // Testing usage with mocks
-authService := services.NewAuthServiceWithDeps(logger, trust, mockHttp, mockSession)
+authService := services.NewAuthServiceWithDeps(logger, trust, mockHTTP, mockSession)
 ```
 
 ### Session Management
+
 Session data includes:
+
 - Server connection details (server, port, httpScheme)
 - Authentication tokens (PVEAuthCookie ticket, CSRFPreventionToken, username)
 - Stored in `~/.proxmox/session` file
 - Validated on every read to ensure all required fields are present
 
 ### Proxmox API Integration
+
 The tool integrates with the Proxmox VE REST API. Understanding the API structure is critical for implementing new commands.
 
 #### API Base Paths
+
 - **JSON API**: `/api2/json/` - Primary REST API endpoint returning JSON responses
 - **ExtJS API**: `/api2/extjs/` - Alternative endpoint for ExtJS frontend (some operations like SDN use this)
 - **Default Port**: 8006 (HTTPS)
 - **Protocol**: HTTPS (HTTP also supported but not recommended)
 
 #### API Endpoint Hierarchy
+
 The API is organized hierarchically around these main resource categories:
 
 1. **`/access`** - Authentication and authorization
+
    - `/access/ticket` - Create authentication tickets (login)
    - `/access/users` - User management
    - `/access/groups` - Group management
@@ -124,6 +139,7 @@ The API is organized hierarchically around these main resource categories:
    - `/access/domains` - Authentication realms (PAM, LDAP, AD, etc.)
 
 2. **`/cluster`** - Cluster-wide operations
+
    - `/cluster/resources` - List all cluster resources
    - `/cluster/tasks` - Cluster task history
    - `/cluster/backup` - Backup scheduling
@@ -136,6 +152,7 @@ The API is organized hierarchically around these main resource categories:
      - `/cluster/sdn/controllers` - SDN controllers
 
 3. **`/nodes/{node}`** - Node-specific operations
+
    - `/nodes/{node}/qemu` - Virtual machines (KVM)
      - `/nodes/{node}/qemu/{vmid}/status` - VM status operations (start, stop, reset)
      - `/nodes/{node}/qemu/{vmid}/config` - VM configuration
@@ -153,25 +170,31 @@ The API is organized hierarchically around these main resource categories:
    - `/nodes/{node}/firewall` - Node-level firewall
 
 4. **`/storage`** - Storage definitions
+
    - `/storage/{storage}` - Storage configuration
    - `/storage/{storage}/content` - Storage contents
 
 5. **`/pools`** - Resource pools
+
    - `/pools/{poolid}` - Pool management
 
 6. **`/version`** - API version information
 
 #### HTTP Methods and Semantics
+
 - **GET** - Retrieve resource information (list or single resource)
+
   - No CSRF token required
   - Cookie authentication sufficient
 
 - **POST** - Create new resources or trigger actions
+
   - Requires CSRFPreventionToken header
   - Content-Type: `application/x-www-form-urlencoded; charset=UTF-8`
   - Used for: creating VMs, starting/stopping VMs, creating zones
 
 - **PUT** - Update existing resources
+
   - Requires CSRFPreventionToken header
   - Content-Type: `application/x-www-form-urlencoded; charset=UTF-8`
   - Used for: modifying VM configs, updating zone settings
@@ -181,7 +204,9 @@ The API is organized hierarchically around these main resource categories:
   - Used for: deleting VMs, removing zones, deleting backups
 
 #### Authentication Flow
+
 1. **Initial Login** (POST `/api2/json/access/ticket`):
+
    ```
    Payload: username=user@realm&password=pass&realm=pam&new-format=1
    Response: {
@@ -194,6 +219,7 @@ The API is organized hierarchically around these main resource categories:
    ```
 
 2. **Authenticated Requests**:
+
    - **Cookie**: `PVEAuthCookie=<ticket>` (URL-encoded)
    - **Header** (for POST/PUT/DELETE): `CSRFPreventionToken: <token>`
 
@@ -203,13 +229,16 @@ The API is organized hierarchically around these main resource categories:
    - Tokens can have limited permissions and expiration
 
 #### Authentication Realms
+
 Proxmox supports multiple authentication sources:
+
 - **pam** - Linux PAM (default)
 - **pve** - Proxmox VE built-in authentication
 - **ldap** - LDAP directory
 - **ad** - Microsoft Active Directory
 
 #### Request/Response Format
+
 - **Request Body**: `application/x-www-form-urlencoded` (parameter1=value1&parameter2=value2)
 - **Response**: JSON with structure:
   ```json
@@ -227,6 +256,7 @@ Proxmox supports multiple authentication sources:
   ```
 
 #### Common API Patterns
+
 1. **List Resources**: `GET /api2/json/{resource}`
 2. **Get Single Resource**: `GET /api2/json/{resource}/{id}`
 3. **Create Resource**: `POST /api2/json/{resource}` with parameters
@@ -235,6 +265,7 @@ Proxmox supports multiple authentication sources:
 6. **Resource Actions**: `POST /api2/json/{resource}/{id}/{action}`
 
 #### Important API Implementation Notes
+
 - **Ticket Rotation**: Authentication tickets are signed by a cluster-wide key that rotates daily
 - **Task System**: Long-running operations return a task ID (UPID) that can be monitored via `/nodes/{node}/tasks/{upid}/status`
 - **Permissions**: All operations require appropriate permissions based on role-based access control (RBAC)
@@ -242,11 +273,14 @@ Proxmox supports multiple authentication sources:
 - **pvesh Tool**: Command-line utility for exploring API on Proxmox nodes (`pvesh ls`, `pvesh get`, etc.)
 
 #### Current Implementation Status
+
 Currently implemented:
+
 - Authentication (login, validate session)
 - SDN Zone management (create, update, delete zones)
 
 To be implemented (goal is comprehensive coverage):
+
 - Node operations (list, status, configuration)
 - VM operations (create, start, stop, snapshot, clone, migrate)
 - Container operations (create, start, stop)
@@ -264,12 +298,14 @@ To be implemented (goal is comprehensive coverage):
 When adding new Proxmox API endpoints to this CLI tool, follow these patterns:
 
 ### Step 1: Research the API Endpoint
+
 1. Consult the official API documentation: https://pve.proxmox.com/pve-docs/api-viewer/index.html
 2. Identify the endpoint path, HTTP method, required parameters, and response format
 3. Note authentication requirements (cookie + CSRF token for POST/PUT/DELETE)
 4. Test the endpoint manually with `curl` or via the Proxmox web UI's API viewer
 
 ### Step 2: Add Command Structure
+
 1. Determine command hierarchy (e.g., `proxmox-cli nodes list` or `proxmox-cli vm create`)
 2. Create or extend command files in `commands/` directory
 3. Follow existing patterns:
@@ -279,6 +315,7 @@ When adding new Proxmox API endpoints to this CLI tool, follow these patterns:
    - Call service layer functions
 
 Example command structure:
+
 ```go
 func ListNodesCommand() *cobra.Command {
     var cmd = &cobra.Command{
@@ -300,6 +337,7 @@ func ListNodesCommand() *cobra.Command {
 ```
 
 ### Step 3: Implement Service Layer Logic
+
 1. Add functions to appropriate service file or create new service
 2. Use existing `HttpService` and `SessionService` for API communication
 3. Read session data to get server, auth tokens
@@ -309,6 +347,7 @@ func ListNodesCommand() *cobra.Command {
 7. Handle errors appropriately
 
 Example service function:
+
 ```go
 func ListNodes(logger *logrus.Logger, trust bool) ([]Node, error) {
     sessionService, err := NewSessionService(logger)
@@ -351,16 +390,18 @@ func ListNodes(logger *logrus.Logger, trust bool) ([]Node, error) {
 ```
 
 ### Step 4: Add Tests
+
 1. Create test file in `tests/` directory mirroring source structure
 2. Use mock services to isolate logic
 3. Test success cases, error cases, and edge cases
 4. Follow existing test patterns with `mockHttpService` and `mockSessionService`
 
 Example test:
+
 ```go
 func TestListNodes_Success(t *testing.T) {
     logger := logrus.New()
-    mockHttp := &mockHttpService{
+    mockHTTP := &mockHttpService{
         getFunc: func(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error) {
             body := `{"data": [{"node": "pve1", "status": "online"}]}`
             return &http.Response{
@@ -374,6 +415,7 @@ func TestListNodes_Success(t *testing.T) {
 ```
 
 ### Step 5: Update Documentation
+
 1. Add the new command to this CLAUDE.md file under "Current Implementation Status"
 2. Update README.md if the feature is significant
 3. Add usage examples
@@ -381,18 +423,23 @@ func TestListNodes_Success(t *testing.T) {
 ## Testing Strategy
 
 ### Test Structure
+
 - Tests mirror source structure: `tests/services/` for `services/`, `tests/commands/` for `commands/`
 - Use table-driven tests where appropriate
 - Mock all external dependencies (HTTP, file system) using interfaces
 
 ### Mock Pattern
+
 Each service interface has a corresponding mock in test files:
+
 - `mockHttpService` - mocks HTTP operations
 - `mockSessionService` - mocks session file operations
 - Mocks use function fields to allow per-test behavior customization
 
 ### Running Tests in CI
+
 Tests run automatically on PRs to `main` via GitHub Actions (`.github/workflows/test.yml`):
+
 - Uses Go 1.24.3
 - Generates JUnit XML report
 - Publishes test results to PR
@@ -400,7 +447,9 @@ Tests run automatically on PRs to `main` via GitHub Actions (`.github/workflows/
 ## API Exploration and Development Tips
 
 ### Using the API Viewer
+
 The interactive API viewer at https://pve.proxmox.com/pve-docs/api-viewer/index.html is the primary reference:
+
 - Browse the hierarchical endpoint structure
 - View required/optional parameters for each endpoint
 - See parameter types, descriptions, and valid values
@@ -408,7 +457,9 @@ The interactive API viewer at https://pve.proxmox.com/pve-docs/api-viewer/index.
 - Identify which HTTP methods are supported
 
 ### Using pvesh on Proxmox Nodes
+
 If you have access to a Proxmox node, use `pvesh` to explore and test API calls:
+
 ```bash
 # List API paths
 pvesh ls /
@@ -429,6 +480,7 @@ pvesh help create /nodes/{node}/qemu
 ```
 
 ### Testing API Calls with curl
+
 Before implementing in Go, test endpoints with curl:
 
 ```bash
@@ -450,6 +502,7 @@ curl -k -X POST \
 ```
 
 ### Common Implementation Gotchas
+
 - **URL Encoding**: The ticket value in cookies must be URL-encoded (`url.QueryEscape()`)
 - **ExtJS vs JSON**: Some endpoints use `/api2/extjs/` instead of `/api2/json/` (e.g., SDN zones)
 - **CSRF Token**: Required for all POST/PUT/DELETE, but not for GET
@@ -470,6 +523,7 @@ curl -k -X POST \
 ## Module Dependencies
 
 Key external dependencies (see `go.mod`):
+
 - `github.com/spf13/cobra` - CLI framework
 - `github.com/sirupsen/logrus` - Structured logging
 - `github.com/stretchr/testify` - Testing assertions
@@ -480,6 +534,7 @@ Key external dependencies (see `go.mod`):
 This quick reference shows the most commonly used Proxmox API endpoints for implementation:
 
 ### Authentication & Authorization
+
 - `POST /api2/json/access/ticket` - Login and get auth ticket
 - `GET /api2/json/access/permissions` - Get current user permissions
 - `GET /api2/json/access/users` - List users
@@ -489,6 +544,7 @@ This quick reference shows the most commonly used Proxmox API endpoints for impl
 - `GET /api2/json/access/acl` - List ACL entries
 
 ### Cluster Operations
+
 - `GET /api2/json/cluster/resources` - List all cluster resources (VMs, containers, storage, nodes)
 - `GET /api2/json/cluster/status` - Get cluster status
 - `GET /api2/json/cluster/tasks` - List cluster tasks
@@ -498,6 +554,7 @@ This quick reference shows the most commonly used Proxmox API endpoints for impl
 - `GET /api2/json/cluster/firewall/rules` - List firewall rules
 
 ### Nodes
+
 - `GET /api2/json/nodes` - List all nodes
 - `GET /api2/json/nodes/{node}/status` - Get node status
 - `GET /api2/json/nodes/{node}/version` - Get node version info
@@ -508,6 +565,7 @@ This quick reference shows the most commonly used Proxmox API endpoints for impl
 - `GET /api2/json/nodes/{node}/storage` - List storage on node
 
 ### Virtual Machines (QEMU)
+
 - `GET /api2/json/nodes/{node}/qemu` - List VMs on node
 - `GET /api2/json/nodes/{node}/qemu/{vmid}/config` - Get VM config
 - `POST /api2/json/nodes/{node}/qemu` - Create VM
@@ -528,6 +586,7 @@ This quick reference shows the most commonly used Proxmox API endpoints for impl
 - `DELETE /api2/json/nodes/{node}/qemu/{vmid}/snapshot/{snapname}` - Delete snapshot
 
 ### Containers (LXC)
+
 - `GET /api2/json/nodes/{node}/lxc` - List containers on node
 - `GET /api2/json/nodes/{node}/lxc/{vmid}/config` - Get container config
 - `POST /api2/json/nodes/{node}/lxc` - Create container
@@ -543,6 +602,7 @@ This quick reference shows the most commonly used Proxmox API endpoints for impl
 - `POST /api2/json/nodes/{node}/lxc/{vmid}/snapshot` - Create snapshot
 
 ### Storage
+
 - `GET /api2/json/storage` - List storage
 - `GET /api2/json/storage/{storage}` - Get storage config
 - `POST /api2/json/storage` - Create storage
@@ -553,6 +613,7 @@ This quick reference shows the most commonly used Proxmox API endpoints for impl
 - `DELETE /api2/json/nodes/{node}/storage/{storage}/content/{volume}` - Delete volume
 
 ### Networking (SDN)
+
 - `GET /api2/json/cluster/sdn/zones` - List SDN zones
 - `GET /api2/json/cluster/sdn/zones/{zone}` - Get zone config
 - `POST /api2/extjs/cluster/zones` - Create SDN zone (note: uses extjs)
@@ -563,18 +624,21 @@ This quick reference shows the most commonly used Proxmox API endpoints for impl
 - `GET /api2/json/cluster/sdn/controllers` - List SDN controllers
 
 ### Pools
+
 - `GET /api2/json/pools` - List resource pools
 - `POST /api2/json/pools` - Create pool
 - `PUT /api2/json/pools/{poolid}` - Update pool
 - `DELETE /api2/json/pools/{poolid}` - Delete pool
 
 ### Tasks
+
 - `GET /api2/json/nodes/{node}/tasks` - List node tasks
 - `GET /api2/json/nodes/{node}/tasks/{upid}/status` - Get task status
 - `GET /api2/json/nodes/{node}/tasks/{upid}/log` - Get task log
 - `DELETE /api2/json/nodes/{node}/tasks/{upid}` - Delete task from log
 
 ### System Info
+
 - `GET /api2/json/version` - Get API version
 - `GET /api2/json/nodes/{node}/version` - Get node version
 - `GET /api2/json/nodes/{node}/status` - Get node status

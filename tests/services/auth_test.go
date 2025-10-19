@@ -90,7 +90,7 @@ func TestAuthService_ValidateSession_Success(t *testing.T) {
 			},
 		},
 	}
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{}}`, nil
 		},
@@ -100,7 +100,7 @@ func TestAuthService_ValidateSession_Success(t *testing.T) {
 		readSessionFileFunc:    func() (services.SessionData, error) { return validSession, nil },
 		updateSessionFieldFunc: func(field string, value interface{}) error { return nil },
 	}
-	authService := services.NewAuthServiceWithDeps(logger, true, mockHttp, mockSession)
+	authService := services.NewAuthServiceWithDeps(logger, true, mockHTTP, mockSession)
 	valid := authService.ValidateSession()
 	if !valid {
 		t.Error("expected ValidateSession to return true for valid session")
@@ -125,7 +125,7 @@ func TestAuthService_ValidateSession_HttpFailure(t *testing.T) {
 			},
 		},
 	}
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return "", fmt.Errorf("network error")
 		},
@@ -135,7 +135,7 @@ func TestAuthService_ValidateSession_HttpFailure(t *testing.T) {
 		readSessionFileFunc:    func() (services.SessionData, error) { return validSession, nil },
 		updateSessionFieldFunc: func(field string, value interface{}) error { return nil },
 	}
-	authService := services.NewAuthServiceWithDeps(logger, true, mockHttp, mockSession)
+	authService := services.NewAuthServiceWithDeps(logger, true, mockHTTP, mockSession)
 	valid := authService.ValidateSession()
 	if valid {
 		t.Error("expected ValidateSession to return false on HTTP failure")
@@ -160,7 +160,7 @@ func TestAuthService_ValidateSession_UpdateSessionFieldFailure(t *testing.T) {
 			},
 		},
 	}
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{}}`, nil
 		},
@@ -170,7 +170,7 @@ func TestAuthService_ValidateSession_UpdateSessionFieldFailure(t *testing.T) {
 		readSessionFileFunc:    func() (services.SessionData, error) { return validSession, nil },
 		updateSessionFieldFunc: func(field string, value interface{}) error { return fmt.Errorf("write error") },
 	}
-	authService := services.NewAuthServiceWithDeps(logger, true, mockHttp, mockSession)
+	authService := services.NewAuthServiceWithDeps(logger, true, mockHTTP, mockSession)
 	valid := authService.ValidateSession()
 	if valid {
 		t.Error("expected ValidateSession to return false on update session field failure")
@@ -188,7 +188,7 @@ func TestAuthService_ValidateSession_InvalidSessionData(t *testing.T) {
 			}{},
 		},
 	}
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{}}`, nil
 		},
@@ -200,7 +200,7 @@ func TestAuthService_ValidateSession_InvalidSessionData(t *testing.T) {
 		},
 		updateSessionFieldFunc: func(field string, value interface{}) error { return nil },
 	}
-	authService := services.NewAuthServiceWithDeps(logger, true, mockHttp, mockSession)
+	authService := services.NewAuthServiceWithDeps(logger, true, mockHTTP, mockSession)
 	valid := authService.ValidateSession()
 	if valid {
 		t.Error("expected ValidateSession to return false for invalid session data")
@@ -209,7 +209,7 @@ func TestAuthService_ValidateSession_InvalidSessionData(t *testing.T) {
 
 func TestAuthService_LoginToProxmox_Success(t *testing.T) {
 	logger := logrus.New()
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{"username":"user","ticket":"ticket","CSRFPreventionToken":"csrf"}}`, nil
 		},
@@ -219,7 +219,7 @@ func TestAuthService_LoginToProxmox_Success(t *testing.T) {
 		readSessionFileFunc:    func() (services.SessionData, error) { return services.SessionData{}, nil },
 		updateSessionFieldFunc: func(field string, value interface{}) error { return nil },
 	}
-	authService := services.NewAuthServiceWithDeps(logger, true, mockHttp, mockSession)
+	authService := services.NewAuthServiceWithDeps(logger, true, mockHTTP, mockSession)
 	err := authService.LoginToProxmox("localhost", 8006, "https", "user", "pass")
 	if err != nil {
 		t.Errorf("expected LoginToProxmox to succeed, got error: %v", err)
@@ -228,7 +228,7 @@ func TestAuthService_LoginToProxmox_Success(t *testing.T) {
 
 func TestAuthService_LoginToProxmox_HttpFailure(t *testing.T) {
 	logger := logrus.New()
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return "", fmt.Errorf("network error")
 		},
@@ -238,7 +238,7 @@ func TestAuthService_LoginToProxmox_HttpFailure(t *testing.T) {
 		readSessionFileFunc:    func() (services.SessionData, error) { return services.SessionData{}, nil },
 		updateSessionFieldFunc: func(field string, value interface{}) error { return nil },
 	}
-	authService := services.NewAuthServiceWithDeps(logger, true, mockHttp, mockSession)
+	authService := services.NewAuthServiceWithDeps(logger, true, mockHTTP, mockSession)
 	err := authService.LoginToProxmox("localhost", 8006, "https", "user", "pass")
 	if err == nil {
 		t.Error("expected LoginToProxmox to return error on HTTP failure")
@@ -247,7 +247,7 @@ func TestAuthService_LoginToProxmox_HttpFailure(t *testing.T) {
 
 func TestAuthService_LoginToProxmox_InvalidJson(t *testing.T) {
 	logger := logrus.New()
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return "not json", nil
 		},
@@ -257,7 +257,7 @@ func TestAuthService_LoginToProxmox_InvalidJson(t *testing.T) {
 		readSessionFileFunc:    func() (services.SessionData, error) { return services.SessionData{}, nil },
 		updateSessionFieldFunc: func(field string, value interface{}) error { return nil },
 	}
-	authService := services.NewAuthServiceWithDeps(logger, true, mockHttp, mockSession)
+	authService := services.NewAuthServiceWithDeps(logger, true, mockHTTP, mockSession)
 	err := authService.LoginToProxmox("localhost", 8006, "https", "user", "pass")
 	if err == nil {
 		t.Error("expected LoginToProxmox to return error on invalid JSON")
@@ -266,7 +266,7 @@ func TestAuthService_LoginToProxmox_InvalidJson(t *testing.T) {
 
 func TestAuthService_LoginToProxmox_WriteSessionFileFailure(t *testing.T) {
 	logger := logrus.New()
-	mockHttp := &mockHttpService{
+	mockHTTP := &mockHttpService{
 		postFunc: func(uri, payload string, headers map[string]string, cookies []*http.Cookie) (string, error) {
 			return `{"data":{"username":"user","ticket":"ticket","CSRFPreventionToken":"csrf"}}`, nil
 		},
@@ -276,7 +276,7 @@ func TestAuthService_LoginToProxmox_WriteSessionFileFailure(t *testing.T) {
 		readSessionFileFunc:    func() (services.SessionData, error) { return services.SessionData{}, nil },
 		updateSessionFieldFunc: func(field string, value interface{}) error { return nil },
 	}
-	authService := services.NewAuthServiceWithDeps(logger, true, mockHttp, mockSession)
+	authService := services.NewAuthServiceWithDeps(logger, true, mockHTTP, mockSession)
 	err := authService.LoginToProxmox("localhost", 8006, "https", "user", "pass")
 	if err == nil {
 		t.Error("expected LoginToProxmox to return error on write session file failure")
