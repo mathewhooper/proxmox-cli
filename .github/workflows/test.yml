@@ -1,45 +1,189 @@
-name: Run Unit Tests
+name: Build and Test
 
 on:
   pull_request:
+    branches:
+      - main
+  push:
     branches:
       - main
 
 permissions:
   checks: write
   pull-requests: write
+  contents: read
 
 jobs:
-  test:
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: 1.24.3
+          go-version: '1.24.3'
+          cache: true
 
-      - name: Add $GOPATH/bin to PATH
-        run: echo "${{ runner.tool_cache }}/go/bin" >> $GITHUB_PATH
+      - name: Verify Go modules
+        run: |
+          go mod download
+          go mod verify
 
-      - name: Install dependencies
+      - name: Run go mod tidy
         run: go mod tidy
 
-      - name: Install go-junit-report
-        run: go install github.com/jstemmer/go-junit-report@latest
-        env:
-          GOPATH: ${{ runner.tool_cache }}/go
-          GOBIN: ${{ runner.tool_cache }}/go/bin
+      - name: Check for uncommitted changes
+        run: |
+          if ! git diff --exit-code go.mod go.sum; then
+            echo "::error::go.mod or go.sum has uncommitted changes after 'go mod tidy'"
+            exit 1
+          fi
 
-      - name: Run tests and save results
-        run: go test -v 2>&1 ./... | go-junit-report -set-exit-code > report.xml
+      - name: Build project
+        run: |
+          echo "::group::Building project"
+          go build -v -o proxmox-cli .
+          echo "::endgroup::"
+          echo "✅ Build successful"
+
+      - name: Run golint (optional)
+        continue-on-error: true
+        run: |
+          go install golang.org/x/lint/golint@latest
+          golint ./... || true
+
+      - name: Run go vet
+        run: |
+          echo "::group::Running go vet"
+          go vet ./...
+          echo "::endgroup::"
+          echo "✅ go vet passed"
+
+      - name: Install test dependencies
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@latest
+
+      - name: Run tests with coverage
+        id: test
+        run: |
+          echo "::group::Running tests"
+          set +e
+          go test -v -coverprofile=coverage.out -covermode=atomic ./... 2>&1 | tee test-output.log
+          TEST_EXIT_CODE=$?
+          set -e
+          echo "::endgroup::"
+
+          # Generate JUnit report
+          cat test-output.log | go-junit-report -set-exit-code -iocopy -out report.xml
+
+          # Generate coverage report
+          go tool cover -func=coverage.out -o=coverage.txt
+
+          # Calculate coverage percentage
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+
+          # Count test results
+          TOTAL_TESTS=$(grep -o "^--- PASS" test-output.log | wc -l)
+          FAILED_TESTS=$(grep -o "^--- FAIL" test-output.log | wc -l)
+          echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+          echo "failed_tests=$FAILED_TESTS" >> $GITHUB_OUTPUT
+
+          exit $TEST_EXIT_CODE
 
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
-          files: |
-            report.xml
+          check_name: Test Results
+          files: report.xml
+          comment_mode: always
+          compare_to_earlier_commit: false
+
+      - name: Upload coverage to GitHub
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: |
+            coverage.out
+            coverage.txt
+
+      - name: Comment PR with results
+        uses: actions/github-script@v7
+        if: always() && github.event_name == 'pull_request'
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read test output
+            let testOutput = '';
+            try {
+              testOutput = fs.readFileSync('test-output.log', 'utf8');
+            } catch (e) {
+              testOutput = 'Could not read test output';
+            }
+
+            // Extract failed tests
+            const failedTests = [];
+            const lines = testOutput.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+              if (lines[i].includes('--- FAIL:')) {
+                failedTests.push(lines[i].replace('--- FAIL: ', '').trim());
+              }
+            }
+
+            // Read coverage
+            let coverageText = '';
+            try {
+              coverageText = fs.readFileSync('coverage.txt', 'utf8');
+            } catch (e) {
+              coverageText = 'Coverage report not available';
+            }
+
+            const totalTests = '${{ steps.test.outputs.total_tests }}' || '0';
+            const failedCount = '${{ steps.test.outputs.failed_tests }}' || '0';
+            const coverage = '${{ steps.test.outputs.coverage }}' || 'N/A';
+            const buildStatus = '${{ job.status }}' === 'success' ? '✅' : '❌';
+
+            let comment = `## ${buildStatus} Build and Test Results\n\n`;
+            comment += `### Summary\n`;
+            comment += `- **Build Status**: ${buildStatus === '✅' ? 'Success' : 'Failed'}\n`;
+            comment += `- **Total Tests**: ${totalTests}\n`;
+            comment += `- **Failed Tests**: ${failedCount}\n`;
+            comment += `- **Test Coverage**: ${coverage}\n\n`;
+
+            if (failedCount > 0 && failedTests.length > 0) {
+              comment += `### ❌ Failed Tests\n\n`;
+              comment += '```\n';
+              failedTests.forEach(test => {
+                comment += `${test}\n`;
+              });
+              comment += '```\n\n';
+
+              comment += `<details>\n<summary>View full test output</summary>\n\n`;
+              comment += '```\n';
+              // Limit output to last 100 lines to avoid comment size limits
+              const outputLines = testOutput.split('\n').slice(-100);
+              comment += outputLines.join('\n');
+              comment += '\n```\n</details>\n';
+            } else {
+              comment += `### ✅ All tests passed!\n\n`;
+            }
+
+            comment += `\n<details>\n<summary>Coverage Report</summary>\n\n`;
+            comment += '```\n';
+            comment += coverageText;
+            comment += '\n```\n</details>\n';
+
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
