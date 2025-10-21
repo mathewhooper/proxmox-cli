@@ -16,6 +16,59 @@ This project is a Command-Line Interface (CLI) tool designed to interact with a 
   - **Update Zone**: Modify the type of an existing SDN zone.
   - **Apply Configuration**: Apply the configuration of a specified SDN zone.
 
+## Getting Started
+
+### Building and Running
+
+**Using Make (Recommended)**:
+
+```sh
+# Install dependencies
+go mod tidy
+
+# Build the binary
+make build
+
+# Run the CLI with arguments
+make run ARGS="login -s proxmox.example.com -u root@pam"
+
+# Or run directly after building
+./proxmox-cli login -s <server> -u <username>
+./proxmox-cli validate
+```
+
+**Using Go commands directly**:
+
+```sh
+# Install dependencies
+go mod tidy
+
+# Build the binary
+go build -o proxmox-cli
+
+# Run the CLI
+./proxmox-cli [command]
+```
+
+### Available Make Targets
+
+```sh
+# Show all available commands
+make help
+
+# Development commands
+make build           # Build the binary
+make test            # Run all tests
+make test-coverage   # Run tests with coverage
+make fmt             # Format code
+make lint            # Run linting checks
+make vet             # Run go vet
+make ci              # Run all CI checks
+make pre-commit      # Run pre-commit checks
+make clean           # Clean build artifacts
+make install-linters # Install linting tools
+```
+
 ## Architecture
 
 The project follows a modular and object-oriented design using Go idioms:
@@ -60,6 +113,21 @@ Unit tests are provided for core services, following the same directory structur
 - **Test Coverage**: The project maintains comprehensive test coverage across all services.
 
 ### Running Tests Locally
+
+**Using Make (Recommended)**:
+
+```sh
+# Run all tests
+make test
+
+# Run tests with coverage report
+make test-coverage
+
+# View HTML coverage report (after running test-coverage)
+go tool cover -html=coverage.out
+```
+
+**Using Go commands directly**:
 
 ```sh
 # Run all tests
