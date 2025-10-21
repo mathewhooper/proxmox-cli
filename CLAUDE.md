@@ -12,7 +12,51 @@ The Proxmox VE API is a REST-like API that uses JSON as the primary data format,
 
 ## Development Commands
 
-### Testing
+### Using Make (Recommended)
+
+This project includes a Makefile for common development tasks:
+
+```sh
+# Show all available make targets
+make help
+
+# Run all tests
+make test
+
+# Run tests with coverage report
+make test-coverage
+
+# Build the binary
+make build
+
+# Build and run the CLI (pass arguments with ARGS)
+make run ARGS="login -s proxmox.example.com -u root@pam"
+
+# Format code
+make fmt
+
+# Run linting checks
+make lint
+
+# Run go vet
+make vet
+
+# Run all CI checks (format, lint, vet, test)
+make ci
+
+# Pre-commit checks (format, vet, lint)
+make pre-commit
+
+# Clean build artifacts
+make clean
+
+# Install linting tools
+make install-linters
+```
+
+### Direct Go Commands
+
+You can also use Go commands directly:
 
 ```sh
 # Run all tests
@@ -29,11 +73,7 @@ go test -v ./tests/services/auth_test.go
 
 # Run a specific test function
 go test -v ./tests/services/auth_test.go -run TestAuthService_LoginToProxmox_Success
-```
 
-### Building and Running
-
-```sh
 # Install dependencies
 go mod tidy
 
