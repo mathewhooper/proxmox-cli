@@ -78,7 +78,8 @@ func ListVMsCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
-	cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
 
 	return cmd
 }
@@ -133,8 +134,10 @@ func VMStatusCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }
@@ -173,8 +176,10 @@ func StartVMCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }
@@ -213,8 +218,10 @@ func StopVMCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }
@@ -253,8 +260,10 @@ func ShutdownVMCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }
@@ -293,8 +302,10 @@ func RebootVMCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }
@@ -333,8 +344,10 @@ func ResetVMCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }
@@ -373,8 +386,10 @@ func SuspendVMCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }
@@ -413,8 +428,10 @@ func ResumeVMCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }
@@ -453,8 +470,10 @@ func DeleteVMCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().IntVarP(&vmid, "vmid", "i", 0, "VM ID")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("vmid")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("vmid")
 
 	return cmd
 }

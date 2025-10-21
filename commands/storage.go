@@ -116,8 +116,10 @@ func StorageContentCommand() *cobra.Command {
 
 	cmd.Flags().StringVarP(&nodeName, "node", "n", "", "Name of the node")
 	cmd.Flags().StringVarP(&storageName, "storage", "s", "", "Name of the storage")
-	cmd.MarkFlagRequired("node")
-	cmd.MarkFlagRequired("storage")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("node")
+	//nolint:errcheck // Flags are defined above, so these cannot fail
+	_ = cmd.MarkFlagRequired("storage")
 
 	return cmd
 }

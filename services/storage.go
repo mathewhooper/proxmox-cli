@@ -44,7 +44,7 @@ type StorageContentResponse struct {
 type StorageService struct {
 	Logger         *logrus.Logger
 	Trust          bool
-	HttpService    HttpServiceInterface
+	HTTPService    HTTPServiceInterface
 	SessionService SessionServiceInterface
 }
 
@@ -58,17 +58,17 @@ func NewStorageService(logger *logrus.Logger, trust bool) (*StorageService, erro
 	return &StorageService{
 		Logger:         logger,
 		Trust:          trust,
-		HttpService:    NewHttpService(logger, trust),
+		HTTPService:    NewHttpService(logger, trust),
 		SessionService: sessionService,
 	}, nil
 }
 
 // NewStorageServiceWithDeps creates a StorageService with injected dependencies (for testing)
-func NewStorageServiceWithDeps(logger *logrus.Logger, trust bool, httpService HttpServiceInterface, sessionService SessionServiceInterface) *StorageService {
+func NewStorageServiceWithDeps(logger *logrus.Logger, trust bool, httpService HTTPServiceInterface, sessionService SessionServiceInterface) *StorageService {
 	return &StorageService{
 		Logger:         logger,
 		Trust:          trust,
-		HttpService:    httpService,
+		HTTPService:    httpService,
 		SessionService: sessionService,
 	}
 }
@@ -91,12 +91,13 @@ func (s *StorageService) ListStorage() ([]Storage, error) {
 		},
 	}
 
-	resp, err := s.HttpService.Get(uri, nil, cookies)
+	resp, err := s.HTTPService.Get(uri, nil, cookies)
 	if err != nil {
 		s.Logger.Error("Error listing storage: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -105,7 +106,8 @@ func (s *StorageService) ListStorage() ([]Storage, error) {
 	}
 
 	var result StorageListResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		s.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}
@@ -131,12 +133,13 @@ func (s *StorageService) ListStorageContent(nodeName, storageName string) ([]Sto
 		},
 	}
 
-	resp, err := s.HttpService.Get(uri, nil, cookies)
+	resp, err := s.HTTPService.Get(uri, nil, cookies)
 	if err != nil {
 		s.Logger.Error("Error listing storage content: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -145,7 +148,8 @@ func (s *StorageService) ListStorageContent(nodeName, storageName string) ([]Sto
 	}
 
 	var result StorageContentResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		s.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}

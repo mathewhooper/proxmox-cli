@@ -36,6 +36,7 @@ type NodeStatus struct {
 	PVEVersion string         `json:"pveversion"`
 }
 
+// NodeCPUInfo represents CPU information for a node
 type NodeCPUInfo struct {
 	CPUs    int    `json:"cpus"`
 	Model   string `json:"model"`
@@ -43,18 +44,21 @@ type NodeCPUInfo struct {
 	MHZ     string `json:"mhz"`
 }
 
+// NodeMemoryInfo represents memory usage information for a node
 type NodeMemoryInfo struct {
 	Used  int64 `json:"used"`
 	Total int64 `json:"total"`
 	Free  int64 `json:"free"`
 }
 
+// NodeRootFSInfo represents root filesystem usage information for a node
 type NodeRootFSInfo struct {
 	Used  int64 `json:"used"`
 	Total int64 `json:"total"`
 	Avail int64 `json:"avail"`
 }
 
+// NodeSwapInfo represents swap space usage information for a node
 type NodeSwapInfo struct {
 	Used  int64 `json:"used"`
 	Total int64 `json:"total"`
@@ -87,7 +91,7 @@ type NodeVersionResponse struct {
 type NodesService struct {
 	Logger         *logrus.Logger
 	Trust          bool
-	HttpService    HttpServiceInterface
+	HttpService    HTTPServiceInterface
 	SessionService SessionServiceInterface
 }
 
@@ -107,7 +111,7 @@ func NewNodesService(logger *logrus.Logger, trust bool) (*NodesService, error) {
 }
 
 // NewNodesServiceWithDeps creates a NodesService with injected dependencies (for testing)
-func NewNodesServiceWithDeps(logger *logrus.Logger, trust bool, httpService HttpServiceInterface, sessionService SessionServiceInterface) *NodesService {
+func NewNodesServiceWithDeps(logger *logrus.Logger, trust bool, httpService HTTPServiceInterface, sessionService SessionServiceInterface) *NodesService {
 	return &NodesService{
 		Logger:         logger,
 		Trust:          trust,
@@ -139,7 +143,8 @@ func (n *NodesService) ListNodes() ([]Node, error) {
 		n.Logger.Error("Error listing nodes: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -148,7 +153,8 @@ func (n *NodesService) ListNodes() ([]Node, error) {
 	}
 
 	var result NodeListResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		n.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}
@@ -179,7 +185,8 @@ func (n *NodesService) GetNodeStatus(nodeName string) (*NodeStatus, error) {
 		n.Logger.Error("Error getting node status: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -188,7 +195,8 @@ func (n *NodesService) GetNodeStatus(nodeName string) (*NodeStatus, error) {
 	}
 
 	var result NodeStatusResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		n.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}
@@ -219,7 +227,8 @@ func (n *NodesService) GetNodeVersion(nodeName string) (*NodeVersion, error) {
 		n.Logger.Error("Error getting node version: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -228,7 +237,8 @@ func (n *NodesService) GetNodeVersion(nodeName string) (*NodeVersion, error) {
 	}
 
 	var result NodeVersionResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		n.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}

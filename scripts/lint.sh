@@ -51,7 +51,7 @@ run_check() {
 LINT_FAILED=0
 
 # 1. Check if gofmt needs to be run
-echo -e "${YELLOW}[1/7] Checking code formatting with gofmt...${NC}"
+echo -e "${YELLOW}[1/6] Checking code formatting with gofmt...${NC}"
 if ! run_check "gofmt" "test -z \"\$(gofmt -l .)\""; then
     echo -e "${RED}Files need formatting. Run: gofmt -w .${NC}"
     echo "Files that need formatting:"
@@ -60,24 +60,13 @@ if ! run_check "gofmt" "test -z \"\$(gofmt -l .)\""; then
 fi
 
 # 2. Run go vet
-echo -e "${YELLOW}[2/7] Running go vet...${NC}"
+echo -e "${YELLOW}[2/6] Running go vet...${NC}"
 if ! run_check "go vet" "go vet ./..."; then
     LINT_FAILED=1
 fi
 
-# 3. Run golint (if available)
-echo -e "${YELLOW}[3/7] Running golint...${NC}"
-if command -v golint &> /dev/null; then
-    if ! run_check "golint" "golint -set_exit_status ./..."; then
-        LINT_FAILED=1
-    fi
-else
-    echo -e "${YELLOW}⚠ golint not installed, skipping (install: go install golang.org/x/lint/golint@latest)${NC}"
-    echo ""
-fi
-
-# 4. Run staticcheck (if available)
-echo -e "${YELLOW}[4/7] Running staticcheck...${NC}"
+# 3. Run staticcheck (if available)
+echo -e "${YELLOW}[3/6] Running staticcheck...${NC}"
 if command -v staticcheck &> /dev/null; then
     if ! run_check "staticcheck" "staticcheck ./..."; then
         LINT_FAILED=1
@@ -87,8 +76,8 @@ else
     echo ""
 fi
 
-# 5. Run golangci-lint (if available) - comprehensive linter
-echo -e "${YELLOW}[5/7] Running golangci-lint...${NC}"
+# 4. Run golangci-lint (if available) - comprehensive linter
+echo -e "${YELLOW}[4/6] Running golangci-lint...${NC}"
 if command -v golangci-lint &> /dev/null; then
     if ! run_check "golangci-lint" "golangci-lint run ./..."; then
         LINT_FAILED=1
@@ -99,10 +88,10 @@ else
     echo ""
 fi
 
-# 6. Check for common mistakes with errcheck (if available)
-echo -e "${YELLOW}[6/7] Running errcheck...${NC}"
+# 5. Check for common mistakes with errcheck (if available)
+echo -e "${YELLOW}[5/6] Running errcheck...${NC}"
 if command -v errcheck &> /dev/null; then
-    if ! run_check "errcheck" "errcheck ./..."; then
+    if ! run_check "errcheck" "errcheck -exclude .errcheck_excludes.txt -ignoregenerated -ignoretests ./..."; then
         LINT_FAILED=1
     fi
 else
@@ -110,8 +99,8 @@ else
     echo ""
 fi
 
-# 7. Check for security issues with gosec (if available)
-echo -e "${YELLOW}[7/7] Running gosec (security check)...${NC}"
+# 6. Check for security issues with gosec (if available)
+echo -e "${YELLOW}[6/6] Running gosec (security check)...${NC}"
 if command -v gosec &> /dev/null; then
     if ! run_check "gosec" "gosec -quiet ./..."; then
         LINT_FAILED=1

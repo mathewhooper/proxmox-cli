@@ -41,7 +41,8 @@ func LoginCommand() *cobra.Command {
 			}
 			password := string(passwordBytes)
 			authService := services.NewAuthService(config.Logger, config.Trust)
-			if err := authService.LoginToProxmox(server, port, httpScheme, username, password); err != nil {
+			err = authService.LoginToProxmox(server, port, httpScheme, username, password)
+			if err != nil {
 				config.Logger.Error("Login failed: ", err)
 			}
 		},
@@ -53,8 +54,10 @@ func LoginCommand() *cobra.Command {
 	loginCmd.Flags().StringVarP(&httpScheme, "httpScheme", "S", "https", "HTTP scheme (http or https)")
 	loginCmd.Flags().BoolVarP(&logLevel, "show-log", "l", false, "Set the log level to error")
 
-	loginCmd.MarkFlagRequired("server")
-	loginCmd.MarkFlagRequired("username")
+	//nolint:errcheck // Flag is defined above, so this cannot fail
+	_ = loginCmd.MarkFlagRequired("server")
+	//nolint:errcheck // Flag is defined above, so this cannot fail
+	_ = loginCmd.MarkFlagRequired("username")
 
 	return loginCmd
 }

@@ -115,7 +115,8 @@ func NodeStatusCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&nodeName, "name", "n", "", "Name of the node")
-	cmd.MarkFlagRequired("name")
+	//nolint:errcheck // Flag is defined above, so this cannot fail
+	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
 }
@@ -155,7 +156,8 @@ func NodeVersionCommand() *cobra.Command {
 	}
 
 	cmd.Flags().StringVarP(&nodeName, "name", "n", "", "Name of the node")
-	cmd.MarkFlagRequired("name")
+	//nolint:errcheck // Flag is defined above, so this cannot fail
+	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
 }

@@ -43,7 +43,8 @@ func TestSessionService_WriteAndReadSessionFile(t *testing.T) {
 			},
 		},
 	}
-	if err := ss.WriteSessionFile(sd); err != nil {
+	err = ss.WriteSessionFile(sd)
+	if err != nil {
 		t.Fatalf("WriteSessionFile failed: %v", err)
 	}
 	read, err := ss.ReadSessionFile()
@@ -69,7 +70,8 @@ func TestSessionService_ReadSessionFile_Invalid(t *testing.T) {
 	}
 	filePath := filepath.Join(dir, ".proxmox", "session")
 	os.MkdirAll(filepath.Dir(filePath), 0755)
-	if err := os.WriteFile(filePath, []byte(`{"foo": "bar"}`), 0644); err != nil {
+	err = os.WriteFile(filePath, []byte(`{"foo": "bar"}`), 0644)
+	if err != nil {
 		t.Fatalf("failed to write invalid session file: %v", err)
 	}
 	read, err := ss.ReadSessionFile()
@@ -130,10 +132,12 @@ func TestSessionService_UpdateSessionField(t *testing.T) {
 			},
 		},
 	}
-	if err := ss.WriteSessionFile(sd); err != nil {
+	err = ss.WriteSessionFile(sd)
+	if err != nil {
 		t.Fatalf("WriteSessionFile failed: %v", err)
 	}
-	if err := ss.UpdateSessionField("server", "newhost"); err != nil {
+	err = ss.UpdateSessionField("server", "newhost")
+	if err != nil {
 		t.Errorf("UpdateSessionField failed: %v", err)
 	}
 	read, err := ss.ReadSessionFile()

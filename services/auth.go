@@ -13,7 +13,7 @@ import (
 type AuthService struct {
 	Logger         *logrus.Logger
 	Trust          bool
-	HttpService    HttpServiceInterface
+	HTTPService    HTTPServiceInterface
 	SessionService SessionServiceInterface
 }
 
@@ -22,17 +22,17 @@ func NewAuthService(logger *logrus.Logger, trust bool) *AuthService {
 	return &AuthService{
 		Logger:         logger,
 		Trust:          trust,
-		HttpService:    NewHttpService(logger, trust),
+		HTTPService:    NewHttpService(logger, trust),
 		SessionService: mustNewSessionService(logger),
 	}
 }
 
 // NewAuthServiceWithDeps allows injecting mocks for testing.
-func NewAuthServiceWithDeps(logger *logrus.Logger, trust bool, httpService HttpServiceInterface, sessionService SessionServiceInterface) *AuthService {
+func NewAuthServiceWithDeps(logger *logrus.Logger, trust bool, httpService HTTPServiceInterface, sessionService SessionServiceInterface) *AuthService {
 	return &AuthService{
 		Logger:         logger,
 		Trust:          trust,
-		HttpService:    httpService,
+		HTTPService:    httpService,
 		SessionService: sessionService,
 	}
 }
@@ -46,12 +46,13 @@ func mustNewSessionService(logger *logrus.Logger) SessionServiceInterface {
 	return ss
 }
 
+// LoginToProxmox authenticates with the Proxmox server and stores the session data
 func (a *AuthService) LoginToProxmox(server string, port int, httpScheme, username, password string) error {
 	uri := fmt.Sprintf("%s://%s:%d/api2/json/access/ticket", httpScheme, server, port)
 	payload := fmt.Sprintf("username=%s&password=%s&realm=pam&new-format=1", username, password)
-	headers := UrlEncodedHeader
+	headers := URLEncodedHeader
 
-	body, err := a.HttpService.Post(uri, payload, headers, nil)
+	body, err := a.HTTPService.Post(uri, payload, headers, nil)
 	if err != nil {
 		a.Logger.Error("Error logging in: ", err)
 		return err
@@ -60,7 +61,8 @@ func (a *AuthService) LoginToProxmox(server string, port int, httpScheme, userna
 	a.Logger.Info("Response: ", body)
 
 	var resp SessionDataResponse
-	if err := json.Unmarshal([]byte(body), &resp); err != nil {
+	err = json.Unmarshal([]byte(body), &resp)
+	if err != nil {
 		a.Logger.Error("Error parsing response JSON: ", err)
 		return err
 	}
@@ -72,7 +74,8 @@ func (a *AuthService) LoginToProxmox(server string, port int, httpScheme, userna
 		Response:   resp,
 	}
 
-	if err := a.SessionService.WriteSessionFile(sessionData); err != nil {
+	err = a.SessionService.WriteSessionFile(sessionData)
+	if err != nil {
 		a.Logger.Error("Error writing session data to file: ", err)
 		return err
 	}
@@ -80,6 +83,7 @@ func (a *AuthService) LoginToProxmox(server string, port int, httpScheme, userna
 	return nil
 }
 
+// ValidateSession checks if the current session is still valid and refreshes it if needed
 func (a *AuthService) ValidateSession() bool {
 	sessionData, err := a.SessionService.ReadSessionFile()
 	if err != nil {
@@ -102,13 +106,14 @@ func (a *AuthService) ValidateSession() bool {
 		},
 	}
 
-	body, err := a.HttpService.Post(uri, payload, headers, cookies)
+	body, err := a.HTTPService.Post(uri, payload, headers, cookies)
 	if err != nil {
 		a.Logger.Error("Error validating session: ", err)
 		return false
 	}
 
-	if err := a.SessionService.UpdateSessionField("response", body); err != nil {
+	err = a.SessionService.UpdateSessionField("response", body)
+	if err != nil {
 		a.Logger.Error("Error updating session file: ", err)
 		return false
 	}

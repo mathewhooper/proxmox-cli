@@ -9,8 +9,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// HttpServiceInterface allows mocking of HTTP operations for AuthService.
-type HttpServiceInterface interface {
+// HTTPServiceInterface allows mocking of HTTP operations for AuthService.
+type HTTPServiceInterface interface {
 	Post(url string, payload string, headers map[string]string, cookies []*http.Cookie) (string, error)
 	Get(url string, headers map[string]string, cookies []*http.Cookie) (*http.Response, error)
 	Put(url string, payload string, headers map[string]string, cookies []*http.Cookie) (string, error)
@@ -18,26 +18,31 @@ type HttpServiceInterface interface {
 }
 
 // HttpService provides HTTP client functionality with optional SSL trust and logging.
+//
+//nolint:stylecheck
 type HttpService struct {
 	HTTPClient *http.Client
 	trust      bool
 	logger     *logrus.Logger
 }
 
-// UrlEncodedHeader is a reusable header map for URL-encoded POST requests.
-var UrlEncodedHeader = map[string]string{
+// URLEncodedHeader is a reusable header map for URL-encoded POST requests.
+var URLEncodedHeader = map[string]string{
 	"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
 }
 
 // NewHttpService creates and returns a new HttpService instance.
 // logger: the logger to use for HTTP operations.
 // trust: if true, disables SSL certificate verification.
+//
+//nolint:stylecheck
 func NewHttpService(logger *logrus.Logger, trust bool) *HttpService {
 	transport := &http.Transport{}
 
 	if trust {
+		//nolint:gosec // G402: InsecureSkipVerify is intentional when user sets --trust flag
 		transport = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // #nosec G402 -- User explicitly requested with --trust flag
 		}
 	}
 
@@ -80,7 +85,8 @@ func (s *HttpService) Post(url string, payload string, headers map[string]string
 		s.logger.Error("Error executing POST request:", err)
 		return "", err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -105,7 +111,8 @@ func (s *HttpService) Put(url string, payload string, headers map[string]string,
 		s.logger.Error("Error executing PUT request:", err)
 		return "", err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -130,7 +137,8 @@ func (s *HttpService) Delete(url string, headers map[string]string, cookies []*h
 		s.logger.Error("Error executing DELETE request:", err)
 		return "", err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {

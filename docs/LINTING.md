@@ -39,24 +39,25 @@ The project uses multiple linting tools, each serving a specific purpose:
   - Misuse of unsafe pointers
   - Printf format mismatches
 
-### 3. **golint** (Style Checker)
-- **Purpose**: Checks Go coding style guidelines
-- **Status**: OPTIONAL (informational)
-- **Install**: `go install golang.org/x/lint/golint@latest`
-- **Examples**:
-  - Exported functions without comments
-  - Variable naming conventions
-
-### 4. **staticcheck** (Advanced Linter)
+### 3. **staticcheck** (Advanced Linter)
 - **Purpose**: Advanced static analysis for bugs and performance issues
 - **Status**: RECOMMENDED (runs in CI)
 - **Install**: `go install honnef.co/go/tools/cmd/staticcheck@latest`
+
+### 4. **golangci-lint** (Meta Linter)
+- **Purpose**: Runs multiple linters in parallel with caching, including style checking
+- **Status**: RECOMMENDED (comprehensive checks)
+- **Install**: See installation section below
+- **Config**: `.golangci.yml`
+- **Includes**: revive (modern replacement for deprecated golint), gofmt, goimports, and many more
 
 ### 5. **errcheck** (Error Handling)
 - **Purpose**: Ensures all errors are checked
 - **Status**: RECOMMENDED (runs in CI)
 - **Install**: `go install github.com/kisielk/errcheck@latest`
 - **Why**: Unchecked errors can cause runtime issues
+- **Config**: `.errcheck_excludes.txt` - Excludes common test utilities
+- **Note**: Test files are excluded from errcheck scanning (`-ignoretests`)
 
 ### 6. **gosec** (Security Analysis)
 - **Purpose**: Identifies security vulnerabilities
@@ -67,16 +68,18 @@ The project uses multiple linting tools, each serving a specific purpose:
   - SQL injection vulnerabilities
   - Unsafe file operations
 
-### 7. **golangci-lint** (Meta Linter)
-- **Purpose**: Runs multiple linters in parallel with caching
-- **Status**: RECOMMENDED (comprehensive checks)
-- **Install**: See installation section below
-- **Config**: `.golangci.yml`
-
 ## Configuration Files
 
 ### `.golangci.yml`
 Configures golangci-lint with enabled linters and settings:
+
+### `.errcheck_excludes.txt`
+Excludes common functions from errcheck that are safe to ignore:
+- `(net/http.ResponseWriter).Write` - Test response writing
+- `(*github.com/spf13/cobra.Command).Help` - Help display in tests
+- `(*github.com/spf13/pflag.FlagSet).Set` - Flag setting in tests
+
+Test files are automatically excluded using the `-ignoretests` flag.
 
 ```yaml
 linters:
@@ -104,11 +107,10 @@ This shell script runs all linting checks in order:
 
 1. **gofmt** - Code formatting
 2. **go vet** - Static analysis
-3. **golint** - Style checking
-4. **staticcheck** - Advanced analysis
-5. **golangci-lint** - Comprehensive checking
-6. **errcheck** - Error handling
-7. **gosec** - Security analysis
+3. **staticcheck** - Advanced analysis
+4. **golangci-lint** - Comprehensive checking (includes style checking via revive)
+5. **errcheck** - Error handling
+6. **gosec** - Security analysis
 
 ### Output
 
@@ -134,11 +136,8 @@ make install-linters
 ### Install Individually
 
 ```bash
-# golangci-lint (recommended)
-curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
-
-# golint
-go install golang.org/x/lint/golint@latest
+# golangci-lint (recommended - includes many linters)
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.61.0
 
 # staticcheck
 go install honnef.co/go/tools/cmd/staticcheck@latest
@@ -177,11 +176,10 @@ make pre-commit
 gofmt -l .                  # Check formatting
 gofmt -w .                  # Fix formatting
 go vet ./...                # Static analysis
-golint ./...                # Style check
 staticcheck ./...           # Advanced analysis
 errcheck ./...              # Error check
 gosec ./...                 # Security check
-golangci-lint run ./...     # Comprehensive check
+golangci-lint run ./...     # Comprehensive check (includes style checking)
 ```
 
 ## CI/CD Integration
@@ -194,9 +192,10 @@ Linting runs automatically on every pull request before tests:
 - name: Run linting checks
   run: |
     # Install linters
-    curl -sSfL ... | sh -s -- -b $(go env GOPATH)/bin v1.55.2
-    go install golang.org/x/lint/golint@latest
-    ...
+    curl -sSfL ... | sh -s -- -b $(go env GOPATH)/bin v1.61.0
+    go install honnef.co/go/tools/cmd/staticcheck@latest
+    go install github.com/kisielk/errcheck@latest
+    go install github.com/securego/gosec/v2/cmd/gosec@latest
 
     # Run linting
     chmod +x scripts/lint.sh
