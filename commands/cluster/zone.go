@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// ZoneCommand creates and returns the SDN (Software Defined Networking) management command
 func ZoneCommand() *cobra.Command {
 	var zoneCmd = &cobra.Command{
 		Use:   "sdn",
@@ -111,6 +112,7 @@ func updateZoneCommand() *cobra.Command {
 	return updateZoneCmd
 }
 
+// CreateZone creates a new SDN zone in the Proxmox cluster
 func CreateZone(zoneName string, zoneType string, trust bool) bool {
 	sessionService, err := services.NewSessionService(config.Logger)
 	if err != nil {
@@ -143,7 +145,8 @@ func CreateZone(zoneName string, zoneType string, trust bool) bool {
 	config.Logger.Info("Response: ", body)
 
 	var resp services.SessionDataResponse
-	if err := json.Unmarshal([]byte(body), &resp); err != nil {
+	err = json.Unmarshal([]byte(body), &resp)
+	if err != nil {
 		config.Logger.Error("Error parsing response JSON: ", err)
 		return false
 	}
@@ -151,6 +154,7 @@ func CreateZone(zoneName string, zoneType string, trust bool) bool {
 	return true
 }
 
+// UpdateZone updates an existing SDN zone in the Proxmox cluster
 func UpdateZone(zoneName string, newZoneType string, trust bool) bool {
 	sessionService, err := services.NewSessionService(config.Logger)
 	if err != nil {
@@ -183,7 +187,8 @@ func UpdateZone(zoneName string, newZoneType string, trust bool) bool {
 	config.Logger.Info("Response: ", body)
 
 	var resp services.SessionDataResponse
-	if err := json.Unmarshal([]byte(body), &resp); err != nil {
+	err = json.Unmarshal([]byte(body), &resp)
+	if err != nil {
 		config.Logger.Error("Error parsing response JSON: ", err)
 		return false
 	}
@@ -191,6 +196,7 @@ func UpdateZone(zoneName string, newZoneType string, trust bool) bool {
 	return true
 }
 
+// DeleteZone deletes an existing SDN zone from the Proxmox cluster
 func DeleteZone(zoneName string, trust bool) bool {
 	sessionService, err := services.NewSessionService(config.Logger)
 	if err != nil {
@@ -223,7 +229,8 @@ func DeleteZone(zoneName string, trust bool) bool {
 	config.Logger.Info("Response: ", body)
 
 	var resp services.SessionDataResponse
-	if err := json.Unmarshal([]byte(body), &resp); err != nil {
+	err = json.Unmarshal([]byte(body), &resp)
+	if err != nil {
 		config.Logger.Error("Error parsing response JSON: ", err)
 		return false
 	}

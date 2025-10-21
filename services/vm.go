@@ -70,7 +70,7 @@ type VMCreateResponse struct {
 type VMService struct {
 	Logger         *logrus.Logger
 	Trust          bool
-	HttpService    HttpServiceInterface
+	HTTPService    HTTPServiceInterface
 	SessionService SessionServiceInterface
 }
 
@@ -84,17 +84,17 @@ func NewVMService(logger *logrus.Logger, trust bool) (*VMService, error) {
 	return &VMService{
 		Logger:         logger,
 		Trust:          trust,
-		HttpService:    NewHttpService(logger, trust),
+		HTTPService:    NewHttpService(logger, trust),
 		SessionService: sessionService,
 	}, nil
 }
 
 // NewVMServiceWithDeps creates a VMService with injected dependencies (for testing)
-func NewVMServiceWithDeps(logger *logrus.Logger, trust bool, httpService HttpServiceInterface, sessionService SessionServiceInterface) *VMService {
+func NewVMServiceWithDeps(logger *logrus.Logger, trust bool, httpService HTTPServiceInterface, sessionService SessionServiceInterface) *VMService {
 	return &VMService{
 		Logger:         logger,
 		Trust:          trust,
-		HttpService:    httpService,
+		HTTPService:    httpService,
 		SessionService: sessionService,
 	}
 }
@@ -117,12 +117,13 @@ func (v *VMService) ListVMs(nodeName string) ([]VM, error) {
 		},
 	}
 
-	resp, err := v.HttpService.Get(uri, nil, cookies)
+	resp, err := v.HTTPService.Get(uri, nil, cookies)
 	if err != nil {
 		v.Logger.Error("Error listing VMs: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -131,7 +132,8 @@ func (v *VMService) ListVMs(nodeName string) ([]VM, error) {
 	}
 
 	var result VMListResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		v.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}
@@ -157,12 +159,13 @@ func (v *VMService) GetVMStatus(nodeName string, vmid int) (*VMStatus, error) {
 		},
 	}
 
-	resp, err := v.HttpService.Get(uri, nil, cookies)
+	resp, err := v.HTTPService.Get(uri, nil, cookies)
 	if err != nil {
 		v.Logger.Error("Error getting VM status: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -171,7 +174,8 @@ func (v *VMService) GetVMStatus(nodeName string, vmid int) (*VMStatus, error) {
 	}
 
 	var result VMStatusResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		v.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}
@@ -237,14 +241,15 @@ func (v *VMService) vmStatusAction(nodeName string, vmid int, action string) (st
 		},
 	}
 
-	body, err := v.HttpService.Post(uri, "", headers, cookies)
+	body, err := v.HTTPService.Post(uri, "", headers, cookies)
 	if err != nil {
 		v.Logger.Error(fmt.Sprintf("Error performing %s on VM: ", action), err)
 		return "", err
 	}
 
 	var result VMCreateResponse
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
+	err = json.Unmarshal([]byte(body), &result)
+	if err != nil {
 		v.Logger.Error("Error parsing response JSON: ", err)
 		return "", err
 	}
@@ -274,14 +279,15 @@ func (v *VMService) DeleteVM(nodeName string, vmid int) (string, error) {
 		},
 	}
 
-	body, err := v.HttpService.Delete(uri, headers, cookies)
+	body, err := v.HTTPService.Delete(uri, headers, cookies)
 	if err != nil {
 		v.Logger.Error("Error deleting VM: ", err)
 		return "", err
 	}
 
 	var result VMCreateResponse
-	if err := json.Unmarshal([]byte(body), &result); err != nil {
+	err = json.Unmarshal([]byte(body), &result)
+	if err != nil {
 		v.Logger.Error("Error parsing response JSON: ", err)
 		return "", err
 	}

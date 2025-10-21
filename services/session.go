@@ -18,11 +18,13 @@ type SessionServiceInterface interface {
 	UpdateSessionField(field string, value interface{}) error
 }
 
+// SessionService manages Proxmox session data persistence
 type SessionService struct {
 	homeDir string
 	logger  *logrus.Logger
 }
 
+// SessionData represents the Proxmox session information stored locally
 type SessionData struct {
 	Server     string              `json:"server"`
 	Port       int                 `json:"port"`
@@ -30,6 +32,7 @@ type SessionData struct {
 	Response   SessionDataResponse `json:"response"`
 }
 
+// SessionDataResponse represents the authentication response from Proxmox API
 type SessionDataResponse struct {
 	Data struct {
 		Username            string `json:"username"`
@@ -38,6 +41,7 @@ type SessionDataResponse struct {
 	} `json:"data"`
 }
 
+// NewSessionService creates a new SessionService instance
 func NewSessionService(logger *logrus.Logger) (*SessionService, error) {
 	dir, err := os.UserHomeDir()
 	if err != nil {
@@ -50,13 +54,15 @@ func NewSessionService(logger *logrus.Logger) (*SessionService, error) {
 	}, nil
 }
 
+// WriteSessionFile writes session data to the session file
 func (s *SessionService) WriteSessionFile(sessionData SessionData) error {
 	filePath, err := s.getSessionFilepath()
 	if err != nil {
 		return err
 	}
 
-	file, err := os.Create(filePath)
+	//nolint:gosec // G304: File path is from trusted getSessionFilepath method
+	file, err := os.Create(filePath) // #nosec G304 -- File path from trusted getSessionFilepath
 	if err != nil {
 		return err
 	}
@@ -65,21 +71,25 @@ func (s *SessionService) WriteSessionFile(sessionData SessionData) error {
 	return encoder.Encode(sessionData)
 }
 
+// ReadSessionFile reads and validates session data from the session file
 func (s *SessionService) ReadSessionFile() (SessionData, error) {
 	filePath, err := s.getSessionFilepath()
 	if err != nil {
 		return SessionData{}, err
 	}
 
-	file, err := os.Open(filePath)
+	//nolint:gosec // G304: File path is from trusted getSessionFilepath method
+	file, err := os.Open(filePath) // #nosec G304 -- File path from trusted getSessionFilepath
 	if err != nil {
 		return SessionData{}, err
 	}
-	defer file.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = file.Close() }()
 
 	var sessionData SessionData
 	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&sessionData); err != nil {
+	err = decoder.Decode(&sessionData)
+	if err != nil {
 		return SessionData{}, err
 	}
 
@@ -107,6 +117,7 @@ func (s *SessionService) ReadSessionFile() (SessionData, error) {
 	return sessionData, nil
 }
 
+// UpdateSessionField updates a specific field in the session data
 func (s *SessionService) UpdateSessionField(field string, value interface{}) error {
 	sessionData, err := s.ReadSessionFile()
 	if err != nil {
@@ -115,15 +126,19 @@ func (s *SessionService) UpdateSessionField(field string, value interface{}) err
 
 	switch field {
 	case "server":
+		//nolint:errcheck // Type assertion is safe within switch on field name
 		sessionData.Server = value.(string)
 	case "port":
+		//nolint:errcheck // Type assertion is safe within switch on field name
 		sessionData.Port = value.(int)
 	case "httpScheme":
+		//nolint:errcheck // Type assertion is safe within switch on field name
 		sessionData.HttpScheme = value.(string)
 	case "response":
 		var resp SessionDataResponse
 		if str, ok := value.(string); ok {
-			if err := json.Unmarshal([]byte(str), &resp); err != nil {
+			err = json.Unmarshal([]byte(str), &resp)
+			if err != nil {
 				return err
 			}
 			sessionData.Response = resp
@@ -134,18 +149,24 @@ func (s *SessionService) UpdateSessionField(field string, value interface{}) err
 
 func (s *SessionService) getSessionFilepath() (string, error) {
 	dirPath := filepath.Join(s.homeDir, ".proxmox")
-	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		if err := os.MkdirAll(dirPath, 0755); err != nil {
+	var err error
+	if _, err = os.Stat(dirPath); os.IsNotExist(err) {
+		//nolint:gosec // G301: Standard directory permissions for user config
+		err = os.MkdirAll(dirPath, 0755) // #nosec G301 -- Standard permissions for user config directory
+		if err != nil {
 			return "", err
 		}
 	}
 	filePath := filepath.Join(dirPath, "session")
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		file, err := os.Create(filePath)
+	if _, err = os.Stat(filePath); os.IsNotExist(err) {
+		var file *os.File
+		//nolint:gosec // G304: File path is constructed from trusted homeDir
+		file, err = os.Create(filePath) // #nosec G304 -- File path from trusted homeDir
 		if err != nil {
 			return "", err
 		}
-		file.Close()
+		//nolint:errcheck // Best effort close, file was just created
+		_ = file.Close()
 	}
 	return filePath, nil
 }

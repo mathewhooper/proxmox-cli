@@ -102,6 +102,10 @@ func updateVnetCommand() *cobra.Command {
 	return updateCmd
 }
 
+// createVnet creates a new VNet via the Proxmox API.
+// TODO: This function will be integrated in a future implementation.
+//
+//lint:ignore U1000 This function will be implemented in a future release
 func createVnet(vnetName string, trust bool) bool {
 	sessionService, err := services.NewSessionService(config.Logger)
 	if err != nil {
@@ -134,7 +138,8 @@ func createVnet(vnetName string, trust bool) bool {
 	config.Logger.Info("Response: ", body)
 
 	var resp services.SessionDataResponse
-	if err := json.Unmarshal([]byte(body), &resp); err != nil {
+	err = json.Unmarshal([]byte(body), &resp)
+	if err != nil {
 		config.Logger.Error("Error parsing response JSON: ", err)
 		return false
 	}

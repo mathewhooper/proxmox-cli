@@ -81,7 +81,7 @@ The codebase follows a three-layer architecture:
 - **HttpService** (`services/http.go`): HTTP client abstraction
   - Configurable SSL certificate trust via `--trust` flag
   - Supports custom headers and cookies for Proxmox API authentication
-  - All services implement interfaces (`HttpServiceInterface`, `SessionServiceInterface`) for mocking
+  - All services implement interfaces (`HTTPServiceInterface`, `SessionServiceInterface`) for mocking
 
 ### 3. Config Layer (`config/`)
 

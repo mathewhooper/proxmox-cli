@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"proxmox-cli/commands"
 	"proxmox-cli/commands/cluster"
 	"proxmox-cli/config"
@@ -29,5 +31,8 @@ It supports managing nodes, virtual machines, containers, storage, networking, a
 	rootCmd.AddCommand(commands.StorageCommand())
 	rootCmd.AddCommand(cluster.ClusterCommand())
 
-	rootCmd.Execute()
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
 }

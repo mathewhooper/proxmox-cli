@@ -55,7 +55,7 @@ type ClusterStatusResponse struct {
 type ClusterService struct {
 	Logger         *logrus.Logger
 	Trust          bool
-	HttpService    HttpServiceInterface
+	HTTPService    HTTPServiceInterface
 	SessionService SessionServiceInterface
 }
 
@@ -69,17 +69,17 @@ func NewClusterService(logger *logrus.Logger, trust bool) (*ClusterService, erro
 	return &ClusterService{
 		Logger:         logger,
 		Trust:          trust,
-		HttpService:    NewHttpService(logger, trust),
+		HTTPService:    NewHttpService(logger, trust),
 		SessionService: sessionService,
 	}, nil
 }
 
 // NewClusterServiceWithDeps creates a ClusterService with injected dependencies (for testing)
-func NewClusterServiceWithDeps(logger *logrus.Logger, trust bool, httpService HttpServiceInterface, sessionService SessionServiceInterface) *ClusterService {
+func NewClusterServiceWithDeps(logger *logrus.Logger, trust bool, httpService HTTPServiceInterface, sessionService SessionServiceInterface) *ClusterService {
 	return &ClusterService{
 		Logger:         logger,
 		Trust:          trust,
-		HttpService:    httpService,
+		HTTPService:    httpService,
 		SessionService: sessionService,
 	}
 }
@@ -102,12 +102,13 @@ func (c *ClusterService) ListResources() ([]ClusterResource, error) {
 		},
 	}
 
-	resp, err := c.HttpService.Get(uri, nil, cookies)
+	resp, err := c.HTTPService.Get(uri, nil, cookies)
 	if err != nil {
 		c.Logger.Error("Error listing cluster resources: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -116,7 +117,8 @@ func (c *ClusterService) ListResources() ([]ClusterResource, error) {
 	}
 
 	var result ClusterResourcesResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		c.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}
@@ -142,12 +144,13 @@ func (c *ClusterService) GetStatus() ([]ClusterStatus, error) {
 		},
 	}
 
-	resp, err := c.HttpService.Get(uri, nil, cookies)
+	resp, err := c.HTTPService.Get(uri, nil, cookies)
 	if err != nil {
 		c.Logger.Error("Error getting cluster status: ", err)
 		return nil, err
 	}
-	defer resp.Body.Close()
+	//nolint:errcheck // Best effort close in defer
+	defer func() { _ = resp.Body.Close() }()
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -156,7 +159,8 @@ func (c *ClusterService) GetStatus() ([]ClusterStatus, error) {
 	}
 
 	var result ClusterStatusResponse
-	if err := json.Unmarshal(bodyBytes, &result); err != nil {
+	err = json.Unmarshal(bodyBytes, &result)
+	if err != nil {
 		c.Logger.Error("Error parsing response JSON: ", err)
 		return nil, err
 	}
