@@ -63,7 +63,7 @@ clean:
 install-linters:
 	@echo "Installing linting tools..."
 	@echo "Installing golangci-lint..."
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $$(go env GOPATH)/bin v1.61.0
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@echo "Installing staticcheck..."
 	@go install honnef.co/go/tools/cmd/staticcheck@latest
 	@echo "Installing errcheck..."
