@@ -3,8 +3,19 @@
 # Go Linting Script
 # This script runs comprehensive linting checks on the Go codebase
 # Exit code 0 = all checks pass, non-zero = linting failures
+#
+# Usage: ./lint.sh [--from-ci]
+#   --from-ci    Skip golangci-lint check (handled by separate CI pipeline)
 
 set -e
+
+# Parse arguments
+isCi=0
+for arg in "$@"; do
+    if [ "$arg" == "--from-ci" ]; then
+        isCi=1
+    fi
+done
 
 # Add GOPATH/bin to PATH
 export PATH="$(go env GOPATH)/bin:$PATH"
@@ -78,13 +89,16 @@ fi
 
 # 4. Run golangci-lint (if available) - comprehensive linter
 echo -e "${YELLOW}[4/6] Running golangci-lint...${NC}"
-if command -v golangci-lint &> /dev/null; then
+if [ "$isCi" -eq 1 ]; then
+    echo -e "${YELLOW}⚠ Skipping golangci-lint (handled by separate CI pipeline)${NC}"
+    echo ""
+elif command -v golangci-lint &> /dev/null; then
     if ! run_check "golangci-lint" "golangci-lint run ./..."; then
         LINT_FAILED=1
     fi
 else
     echo -e "${YELLOW}⚠ golangci-lint not installed, skipping${NC}"
-    echo -e "${YELLOW}  Install: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b \$(go env GOPATH)/bin${NC}"
+    echo -e "${YELLOW}  Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest${NC}"
     echo ""
 fi
 
