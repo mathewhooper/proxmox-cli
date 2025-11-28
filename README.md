@@ -60,13 +60,20 @@ make help
 make build           # Build the binary
 make test            # Run all tests
 make test-coverage   # Run tests with coverage
-make fmt             # Format code
-make lint            # Run linting checks
+make fmt             # Format code with gofmt
 make vet             # Run go vet
 make ci              # Run all CI checks
 make pre-commit      # Run pre-commit checks
 make clean           # Clean build artifacts
-make install-linters # Install linting tools
+```
+
+**Linting**: This project uses `golangci-lint` for comprehensive code linting.
+```sh
+# Run linting
+golangci-lint run
+
+# Install golangci-lint
+# See: https://golangci-lint.run/docs/welcome/install/#binaries
 ```
 
 ## Architecture
@@ -148,34 +155,41 @@ go tool cover -html=coverage.out
 
 ### Code Quality and Linting
 
-This project enforces strict code quality standards through comprehensive linting:
+This project enforces strict code quality standards through linting:
 
 ```bash
-# Run all linting checks
-make lint
+# Run comprehensive linting
+golangci-lint run
 
 # Format code
 make fmt
 
-# Run all CI checks (format, lint, vet, test)
+# Run go vet
+make vet
+
+# Run all CI checks (format, vet, test)
 make ci
 ```
 
-**Linting Tools**:
-- ✅ **gofmt** - Code formatting (required)
-- ✅ **go vet** - Static analysis (required)
-- ✅ **golangci-lint** - Comprehensive linting
-- ✅ **staticcheck** - Advanced analysis
-- ✅ **errcheck** - Error handling verification
-- ✅ **gosec** - Security vulnerability scanning
+**Linting Tool**:
+- ✅ **golangci-lint** - Comprehensive linting suite that includes:
+  - gofmt, goimports - Code formatting
+  - go vet - Static analysis
+  - staticcheck - Advanced analysis
+  - errcheck - Error handling verification
+  - gosec - Security vulnerability scanning
+  - And many more linters
 
-See [docs/LINTING.md](docs/LINTING.md) for detailed linting documentation.
+**Installation**: https://golangci-lint.run/docs/welcome/install/#binaries
+
+Configuration: See [.golangci.yml](.golangci.yml) for the complete linter configuration.
 
 ### Continuous Integration
 
 This project uses GitHub Actions for automated testing. On every pull request:
 
-- ✅ **Linting**: Runs comprehensive code quality checks (fails fast)
+- ✅ **Linting**: Runs golangci-lint for comprehensive code quality checks (separate workflow)
+- ✅ **Basic Checks**: Runs go vet for static analysis
 - ✅ **Build Verification**: Ensures the project compiles successfully
 - ✅ **Test Execution**: Runs all unit tests with coverage reporting
 - ✅ **PR Reporting**: Posts detailed results as a comment on the PR

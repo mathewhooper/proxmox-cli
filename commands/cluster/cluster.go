@@ -10,7 +10,7 @@ import (
 
 // ClusterCommand creates a new Cobra command for cluster-related operations.
 //
-//nolint:stylecheck,revive
+//nolint:revive
 func ClusterCommand() *cobra.Command {
 	var clusterCmd = &cobra.Command{
 		Use:   "cluster",

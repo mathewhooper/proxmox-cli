@@ -43,19 +43,11 @@ jobs:
             exit 1
           fi
 
-      - name: Run linting checks
+      - name: Run basic checks
         run: |
-          echo "::group::Installing linters"
-
-          # Install additional linters
-          go install honnef.co/go/tools/cmd/staticcheck@latest
-          go install github.com/kisielk/errcheck@latest
-          go install github.com/securego/gosec/v2/cmd/gosec@latest
-          echo "::endgroup::"
-
-          echo "::group::Running linting checks"
-          chmod +x scripts/lint.sh
-          ./scripts/lint.sh --from-ci
+          echo "::group::Running go vet"
+          go vet ./...
+          echo "✅ go vet passed"
           echo "::endgroup::"
 
       - name: Build project

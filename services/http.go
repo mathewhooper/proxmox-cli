@@ -18,8 +18,6 @@ type HTTPServiceInterface interface {
 }
 
 // HttpService provides HTTP client functionality with optional SSL trust and logging.
-//
-//nolint:stylecheck
 type HttpService struct {
 	HTTPClient *http.Client
 	trust      bool
@@ -34,8 +32,6 @@ var URLEncodedHeader = map[string]string{
 // NewHttpService creates and returns a new HttpService instance.
 // logger: the logger to use for HTTP operations.
 // trust: if true, disables SSL certificate verification.
-//
-//nolint:stylecheck
 func NewHttpService(logger *logrus.Logger, trust bool) *HttpService {
 	transport := &http.Transport{}
 
