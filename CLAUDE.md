@@ -35,23 +35,38 @@ make run ARGS="login -s proxmox.example.com -u root@pam"
 # Format code
 make fmt
 
-# Run linting checks
-make lint
-
 # Run go vet
 make vet
 
-# Run all CI checks (format, lint, vet, test)
+# Run all CI checks (format, vet, test)
 make ci
 
-# Pre-commit checks (format, vet, lint)
+# Pre-commit checks (format, vet)
 make pre-commit
 
 # Clean build artifacts
 make clean
 
-# Install linting tools
-make install-linters
+# Run linting (golangci-lint must be installed separately)
+golangci-lint run
+```
+
+### Installing golangci-lint
+
+This project uses golangci-lint for comprehensive code linting. Install it following the official guide:
+
+**Installation:** https://golangci-lint.run/docs/welcome/install/#binaries
+
+Quick install methods:
+```sh
+# macOS/Linux - Binary install
+curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin
+
+# macOS - Homebrew
+brew install golangci-lint
+
+# Linux - Direct binary download (recommended for CI)
+# See: https://golangci-lint.run/docs/welcome/install/#binaries
 ```
 
 ### Direct Go Commands
