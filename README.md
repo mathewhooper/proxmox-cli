@@ -2,7 +2,9 @@
 
 ## Overview
 
-This project is a Command-Line Interface (CLI) tool designed to interact with a Proxmox server. It provides functionality to log in, validate sessions, and securely communicate with the Proxmox API. The tool is written in Go and leverages modular design principles to ensure maintainability and scalability.
+This project is a Command-Line Interface (CLI) tool designed to interact with a Proxmox server remotely via the web API. Unlike Proxmox's built-in CLI tools (such as `pvesh`, `qm`, `pct`) which are designed to run directly on the Proxmox host, this tool is designed to be executed from an end user's computer, communicating with Proxmox servers over HTTPS.
+
+It provides functionality to log in, validate sessions, and securely communicate with the Proxmox REST API. The tool is written in Go and leverages modular design principles to ensure maintainability and scalability.
 
 ## Features
 
