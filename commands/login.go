@@ -33,7 +33,7 @@ func LoginCommand() *cobra.Command {
 				config.SetLogLevel(logrus.InfoLevel)
 			}
 			fmt.Print("Enter Password: ")
-			passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+			passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd())) //nolint:gosec // term.ReadPassword requires int; safe on all supported platforms
 			fmt.Println()
 			if err != nil {
 				config.Logger.Error("Error reading password: ", err)
