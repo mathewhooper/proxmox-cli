@@ -495,7 +495,7 @@ Each service interface has a corresponding mock in test files:
 
 Tests run automatically on PRs to `main` via GitHub Actions (`.github/workflows/test.yml`):
 
-- Uses Go 1.24.3
+- Uses Go version from `go.mod`
 - Generates JUnit XML report
 - Publishes test results to PR
 
