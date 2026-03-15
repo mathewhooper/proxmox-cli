@@ -152,7 +152,7 @@ go tool cover -html=coverage.out  # Opens in browser
 **Tests fail in CI but pass locally**:
 - Check if tests depend on local environment
 - Ensure all test fixtures are committed
-- Verify Go version matches (1.24.3)
+- Verify Go version matches the version in `go.mod`
 
 **Coverage artifacts not available**:
 - Check that tests actually ran (even if they failed)
